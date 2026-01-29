@@ -1,0 +1,81 @@
+import User from "../models/User.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { generateOtp } from "../utils/otpGenerator.js";
+import { response } from "../utils/responseHandler.js";
+import * as twilloService from "../service/twilloService.js";
+import { generateToken } from "../utils/generateTokens.js";
+import { sendEmail } from "../service/emailService.js";
+
+export const sendOtp = asyncHandler(async (req, res) => {
+  const { phoneNumber, phoneSuffix, email } = req.body;
+  const otp = generateOtp();
+  const expiry = new Date(Date.now() + 5 * 60 * 1000);
+  let user;
+  if (email) {
+    user = await User.findOne({ email });
+    if (!user) {
+      user = new User({ email });
+    }
+    await sendEmail({email,otp})
+    user.emailOtpExpiry = expiry;
+    user.emailOtp = otp;
+    await user.save();
+
+    return response(res,200,"Otp send to your email",{ email });
+  }
+  if (!phoneNumber || !phoneSuffix) {
+    return response(res,400,"phone Number And Suffix Are Required");
+  }
+  const fullNumber = `${phoneSuffix}${phoneNumber}`;
+  user = await User.findOne({ phoneNumber });
+  if (!user) {
+    user = new User({ phoneNumber, phoneSuffix });
+  }
+  console.log(user);
+  
+  await twilloService.sendOtpToPhoneNumbser(fullNumber);
+  await user.save();
+
+  return response(res,200,"Otp send to your phone number",{ fullNumber });
+});
+
+export const verifyOtp = asyncHandler(async (req, res) => {
+  const { phoneNumber, phoneSuffix, email, otp } = req.body;
+  let user;
+  if (email) {
+    user = await User.findOne({ email });
+    if (!user) {
+      return response(res, 404, "User Not Found");
+    }
+    const now = Date();
+    if (String(user.emailOtp) !== String(otp) || now > user.emailOtpExpiry) {
+      return response(res, 400, "Otp Invalid or Expired");
+    }
+    user.emailOtpExpiry = null;
+    user.emailOtp = null;
+    user.isVarified = true;
+    await user.save();
+  } else {
+    if (!phoneNumber || !phoneSuffix) {
+      return response(res,400,"phone Number And Suffix Are Required");
+    }
+    const fullNumber = `${phoneSuffix}${phoneNumber}`;
+    user = await User.findOne({ phoneNumber });
+    if (!user) {
+      user = new User({ phoneNumber, phoneSuffix });
+    }
+    const result = await twilloService.verifyOtp(fullNumber,otp);
+    console.log(result.status);
+    
+    if (result.status !== "approved") {
+      return response(res,400,"Invalid Otp");
+    }
+    user.isVarified = true;
+    await user.save();
+  }
+
+  const token = generateToken(user._id);
+
+  res.cookie("token", token);
+  return response(res,200,"Verify Otp Successfully",{ token, user });
+});
