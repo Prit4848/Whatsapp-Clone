@@ -79,3 +79,13 @@ export const verifyOtp = asyncHandler(async (req, res) => {
   res.cookie("token", token);
   return response(res,200,"Verify Otp Successfully",{ token, user });
 });
+
+export const logout = asyncHandler(async (req,res)=>{
+  res.clearCookie("token", {
+      httpOnly: true,
+      secure: false,
+      sameSite: "strict",
+    })
+  response(res,200,"User logout successfully!")
+})
+

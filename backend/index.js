@@ -11,7 +11,7 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 morgan('dev')
-import indexRouter from './src/routes/index.router.js'
+import indexRouter from './src/routes/index.routes.js'
 
 //middleware
 app.use(
