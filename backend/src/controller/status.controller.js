@@ -1,0 +1,110 @@
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { response } from "../utils/responseHandler.js";
+import User from '../models/User.js'
+import { uploadFiletoClodinary } from "../config/clodinaryConfig.js";
+import Status from "../models/Status.js";
+
+export const createStatus = asyncHandler(async (req,res)=>{
+    const {content} = req.body;
+    console.log(content);
+    
+    const userId = req.user._id
+
+    const user = await User.findOne({_id:userId})
+    console.log(user);
+    
+    if(!user){
+        return response(res,404,'User Not Found')
+    }
+    let statusUrl = null
+    let initialContentType = null;
+    const file = req.file
+    if(file){
+        const uploadFile = await uploadFiletoClodinary(file)
+
+        if(!uploadFile.secure_url){
+        return response(res,400,'failed to upload media')
+        }
+
+        statusUrl = uploadFile.secure_url;
+
+        if(file.mimeType.startsWith("video")){
+            initialContentType = "video"
+        }else if(file.mimeType.startsWith('image')){
+            initialContentType = "image"
+        }else{
+            return response(res,'400','Unsupported File Type')
+        }
+    }else if(content.trim()){
+         initialContentType = 'text'
+    }else{
+        return response(res,400,'message Content is require')
+    }
+    
+    const expiry = new Date()
+    expiry.setHours(expiry.getHours() + 24)
+    const status = new Status({
+       user,
+       contentType:initialContentType,
+       expiredAt:expiry,
+       content:content ? content : statusUrl
+    })
+    console.log(status);
+    
+    await status.save()
+
+    const populateStatus = await Status.findOne({_id:status._id})
+    .populate("user","username profilePicture")
+    .populate("viewer","username profilePicture")
+
+    return response(res,200,'stauts Created',populateStatus)
+})
+
+export const getStatus = asyncHandler(async (req,res)=>{
+    const status = await Status.find({expiredAt:{$gt:new Date()}})
+     .populate("user","username profilePicure")
+     .populate("viewer","username profilePicture")
+     .sort({createdAt:-1})
+    
+     return response(res,200,"get status Succesfully",status)
+})
+
+export const viewStatus = asyncHandler(async (req,res)=>{
+    const {statusId} = req.params;
+    const userId = req.user._id
+
+    const status = await Status.findOne({_id:statusId})
+
+    if(!status){
+        return response(res,404,"staus not found")
+    }
+    let stautsmessage = null;
+    if(!status.viewer.includes(userId)){
+        status.viewer.push(userId)
+        await status.save()
+     stautsmessage = 'status view successfully'
+    }else{
+       stautsmessage = 'user alredy view status'
+    }
+
+    return response(res,200,stautsmessage)
+})
+
+export const deleteStatus = asyncHandler(async (req,res)=>{
+    const {statusId} = req.params;
+    const userId = req.user._id;
+
+    const status = await Status.findById(statusId)
+
+    if(!status){
+        return response(res,404,"status not found")
+    }
+
+    if(userId.toString() !== status.user.toString()){
+        return response(res,401,'You Dont have authorized Delete the Status')
+    }
+
+    await status.deleteOne()
+
+    return response(res,200,'status delete succesfully')
+})
