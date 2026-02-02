@@ -1,8 +1,14 @@
 import React from 'react'
+import {BrowserRouter,Routes,Route} from 'react-router-dom'
+import Login from './pages/user-login/login'
 
 const App = () => {
   return (
-    <div className='bg-zinc-800 text-white'>App</div>
+    <BrowserRouter>
+    <Routes>
+      <Route path='/' element={<Login/>} />
+    </Routes>
+    </BrowserRouter>
   )
 }
 

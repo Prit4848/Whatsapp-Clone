@@ -64,7 +64,13 @@ export const sendMessage = asyncHandler(async (req,res)=>{
     .populate({path:"sender",select:"username profilePicture"})
     .populate({path:"receiver",select:"username profilePicture"})
 
-    
+    if(req.io && req.soketUserMap){
+        const receiversocketId = soketUserMap.get(receiverId);
+        req.io.to(receiversocketId).emit('receive_message',popolateMessage)
+        message.messageStatus = 'delivered';
+        await message.save()
+    }
+
     return response(res,201,'Message Send Succesfully',popolateMessage)
 })
 
@@ -114,6 +120,17 @@ export const markasRead = asyncHandler(async (req,res)=>{
     }
 
     await Message.updateMany({_id:{$in:messageId},receiver:userId},{$set:{messageStatus:'read'}})
+    let updatedMessage = null
+    if(req.io && req.soketUserMap){
+        for(const message of message){
+            const senderSocketId = req.soketUserMap.get(message.sender._id.toString())
+            updatedMessage = {
+                _id:message._id,
+                messageStatus:'read'
+            }
+            req.io.to(senderSocketId).emit('mark_read',updatedMessage)
+        }
+    }
 
     return response(res,200,"mark ans read message",message)
 })
@@ -133,6 +150,10 @@ export const deleteMessage = asyncHandler(async (req,res)=>{
     }
 
     await message.deleteOne()
+    if(req.io && req.soketUserMap){
+        const receiversocketId = req.soketUserMap.get(message.receiver.toString())
+        req.io.to(receiversocketId).emit('message_deleted',messageId)
+    }
 
     return response(res,200,"delete message successfully")
 })

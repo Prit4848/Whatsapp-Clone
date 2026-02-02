@@ -57,6 +57,14 @@ export const createStatus = asyncHandler(async (req,res)=>{
     .populate("user","username profilePicture")
     .populate("viewer","username profilePicture")
 
+    if(req.io && req.soketUserMap){
+        for(const [connectedUserId,socketId] of req.soketUserMap){
+            if(connectedUserId !== userId){
+               req.io.to(socketId).emit('new_status',populateStatus)
+            }
+        }
+    }
+
     return response(res,200,'stauts Created',populateStatus)
 })
 
@@ -79,15 +87,33 @@ export const viewStatus = asyncHandler(async (req,res)=>{
         return response(res,404,"staus not found")
     }
     let stautsmessage = null;
+    let updatedStatus = null
     if(!status.viewer.includes(userId)){
         status.viewer.push(userId)
         await status.save()
      stautsmessage = 'status view successfully'
+
+     updatedStatus = await Status.findById(userId)
+     .populate('user',"username profilePicture")
+    .populate('viewer','username profilePicture')
+
+     if(req.io && req.soketUserMap){
+        const statusOwnerSocketId = req.soketUserMap.get(status.user._id.toString())
+        if(statusOwnerSocketId){
+           const viewstatus = {
+                statusId,
+                viewerId:userId,
+                totalViewer:updatedStatus.viewer.length,
+                viewer:updatedStatus.viewer
+            }
+            req.io.to(statusOwnerSocketId).emit("status_viewer",viewStatus)
+        }
+     }
     }else{
        stautsmessage = 'user alredy view status'
     }
 
-    return response(res,200,stautsmessage)
+    return response(res,200,stautsmessage,updatedStatus)
 })
 
 export const deleteStatus = asyncHandler(async (req,res)=>{
@@ -105,6 +131,14 @@ export const deleteStatus = asyncHandler(async (req,res)=>{
     }
 
     await status.deleteOne()
+
+    if(req.io && req.soketUserMap){
+        for(const [connectedUserId,socketId] of req.soketUserMap){
+            if(connectedUserId !== userId){
+                req.io.to(socketId).emit('delete_status',status._id)
+            }
+        }
+    }
 
     return response(res,200,'status delete succesfully')
 })

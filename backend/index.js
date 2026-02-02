@@ -33,7 +33,7 @@ const io = initializeSocket(server)
 
 app.use((req,res,next)=>{
   req.io = io,
-  // req.socketUserMap = io.soketUserMap
+  req.socketUserMap = io.soketUserMap
   next()
 })
 //database connection
