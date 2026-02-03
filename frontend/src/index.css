@@ -1,1 +1,353 @@
 @import "tailwindcss";
+
+@theme {
+  /* Border radius */
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  /* Base colors */
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  /* Primary */
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-hover: hsl(var(--primary-hover));
+  --color-primary-soft: hsl(var(--primary-soft));
+
+  /* Secondary */
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  /* Destructive */
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  /* Muted */
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  /* Accent */
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  /* Popover */
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  /* Card */
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  /* Sidebar */
+  --color-sidebar: hsl(var(--sidebar-background));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+
+  /* Chat-specific colors */
+  --color-chat-bg: hsl(var(--chat-bg));
+  --color-chat-pattern: hsl(var(--chat-pattern));
+
+  /* Bubble colors */
+  --color-bubble-outgoing: hsl(var(--bubble-outgoing));
+  --color-bubble-outgoing-foreground: hsl(var(--bubble-outgoing-foreground));
+  --color-bubble-incoming: hsl(var(--bubble-incoming));
+  --color-bubble-incoming-foreground: hsl(var(--bubble-incoming-foreground));
+
+  /* Status colors */
+  --color-status-online: hsl(var(--status-online));
+  --color-status-warning: hsl(var(--status-warning));
+  --color-status-error: hsl(var(--status-error));
+  --color-status-sent: hsl(var(--status-sent));
+  --color-status-delivered: hsl(var(--status-delivered));
+  --color-status-read: hsl(var(--status-read));
+
+  /* Header */
+  --color-header: hsl(var(--header-bg));
+  --color-header-foreground: hsl(var(--header-foreground));
+
+  /* Animations */
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height);
+    }
+  }
+
+  @keyframes accordion-up {
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+}
+
+/* ===== LIGHT MODE (WhatsApp Web inspired) ===== */
+:root {
+  /* App backgrounds */
+  --background: 210 17% 95%; /* #F0F2F5 */
+  --foreground: 200 32% 10%; /* #111B21 */
+
+  /* Card/Sidebar - pure white */
+  --card: 0 0% 100%; /* #FFFFFF */
+  --card-foreground: 200 32% 10%; /* #111B21 */
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 200 32% 10%;
+
+  /* WhatsApp Brand Green - #25D366 */
+  --primary: 142 70% 49%;
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 142 72% 43%; /* #1EBE5D */
+  --primary-soft: 93 75% 87%; /* #DCF8C6 */
+
+  --secondary: 200 15% 93%; /* #E9EDEF */
+  --secondary-foreground: 200 32% 10%;
+
+  /* Text hierarchy */
+  --muted: 200 15% 93%; /* #E9EDEF */
+  --muted-foreground: 200 12% 58%; /* #8696A0 */
+
+  --accent: 142 70% 49%;
+  --accent-foreground: 0 0% 100%;
+
+  /* Status colors */
+  --destructive: 347 100% 46%; /* #EA0038 */
+  --destructive-foreground: 0 0% 100%;
+
+  /* Borders */
+  --border: 200 15% 93%; /* #E9EDEF */
+  --input: 0 0% 100%; /* #FFFFFF */
+  --ring: 142 70% 49%;
+
+  --radius: 0.5rem;
+
+  /* Chat area - WhatsApp beige pattern */
+  --chat-bg: 30 22% 87%; /* #E5DDD5 */
+  --chat-pattern: 30 22% 82%;
+
+  /* Message bubbles */
+  --bubble-outgoing: 93 75% 87%; /* #DCF8C6 - sent */
+  --bubble-incoming: 0 0% 100%; /* #FFFFFF - received */
+  --bubble-outgoing-foreground: 200 32% 10%;
+  --bubble-incoming-foreground: 200 32% 10%;
+
+  /* Status indicators */
+  --status-online: 142 70% 49%; /* #25D366 */
+  --status-warning: 42 88% 55%; /* #F0B429 */
+  --status-error: 347 100% 46%; /* #EA0038 */
+
+  /* Message status ticks */
+  --status-sent: 200 12% 58%;
+  --status-delivered: 200 12% 58%;
+  --status-read: 199 89% 48%; /* Blue ticks */
+
+  /* Sidebar */
+  --sidebar-background: 0 0% 100%; /* #FFFFFF */
+  --sidebar-foreground: 200 32% 10%;
+  --sidebar-primary: 142 70% 49%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 200 15% 93%;
+  --sidebar-accent-foreground: 200 32% 10%;
+  --sidebar-border: 200 15% 93%;
+  --sidebar-ring: 142 70% 49%;
+
+  /* Header */
+  --header-bg: 200 15% 93%; /* Light grey header */
+  --header-foreground: 200 32% 10%;
+}
+
+/* ===== DARK MODE (WhatsApp Web inspired) ===== */
+.dark {
+  /* App backgrounds - deep teal-grey */
+  --background: 204 42% 7%; /* #0B141A */
+  --foreground: 200 15% 93%; /* #E9EDEF */
+
+  /* Card/Sidebar */
+  --card: 200 32% 10%; /* #111B21 */
+  --card-foreground: 200 15% 93%;
+
+  --popover: 200 32% 10%;
+  --popover-foreground: 200 15% 93%;
+
+  /* Primary stays the same */
+  --primary: 142 70% 49%;
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 142 72% 43%;
+  --primary-soft: 168 100% 18%;
+
+  --secondary: 202 24% 16%; /* #202C33 */
+  --secondary-foreground: 200 15% 93%;
+
+  /* Text hierarchy - inverted from light */
+  --muted: 202 24% 16%;
+  --muted-foreground: 202 13% 45%; /* #667781 */
+
+  --accent: 142 70% 49%;
+  --accent-foreground: 0 0% 100%;
+
+  /* Status colors */
+  --destructive: 0 100% 71%; /* #FF6B6B */
+  --destructive-foreground: 200 32% 10%;
+
+  /* Borders */
+  --border: 200 22% 21%; /* #2A3942 */
+  --input: 202 24% 16%; /* #202C33 */
+  --ring: 142 70% 49%;
+
+  /* Chat area */
+  --chat-bg: 204 42% 7%; /* #0B141A */
+  --chat-pattern: 200 32% 10%;
+
+  /* Message bubbles - dark mode */
+  --bubble-outgoing: 168 100% 18%; /* #005C4B - sent */
+  --bubble-incoming: 202 24% 16%; /* #202C33 - received */
+  --bubble-outgoing-foreground: 200 15% 93%;
+  --bubble-incoming-foreground: 200 15% 93%;
+
+  /* Status indicators */
+  --status-online: 142 70% 49%;
+  --status-warning: 42 88% 55%;
+  --status-error: 0 100% 71%;
+
+  /* Message status ticks */
+  --status-sent: 202 13% 45%;
+  --status-delivered: 202 13% 45%;
+  --status-read: 199 89% 55%;
+
+  /* Sidebar - dark */
+  --sidebar-background: 200 32% 10%; /* #111B21 */
+  --sidebar-foreground: 200 15% 93%;
+  --sidebar-primary: 142 70% 49%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 202 24% 16%;
+  --sidebar-accent-foreground: 200 15% 93%;
+  --sidebar-border: 200 22% 21%;
+  --sidebar-ring: 142 70% 49%;
+
+  /* Header - dark */
+  --header-bg: 200 32% 10%; /* #111B21 */
+  --header-foreground: 200 15% 93%;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Custom thin scrollbar */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 3px;
+}
+
+/* Chat background pattern - WhatsApp style */
+.chat-pattern {
+  background-color: hsl(var(--chat-bg));
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Message bubble animations */
+@keyframes message-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-message-in {
+  animation: message-in 0.2s ease-out;
+}
+
+/* Typing indicator animation */
+@keyframes typing-dot {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-4px);
+  }
+}
+
+.typing-dot {
+  animation: typing-dot 1.4s infinite;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* Skeleton animation */
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-skeleton {
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+/* Primary button hover state */
+.hover\:bg-primary-hover:hover {
+  background-color: hsl(var(--primary-hover));
+}

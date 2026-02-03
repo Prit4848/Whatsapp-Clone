@@ -208,6 +208,8 @@ const initializeSocket = (server)=>{
           }
         };
 
+        socket.on("disconect",handleDisconected)
+
         io.soketUserMap = OnlineUsers
 
         return io  

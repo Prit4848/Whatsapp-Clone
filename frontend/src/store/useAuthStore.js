@@ -1,9 +1,9 @@
 import { create } from "zustand";
-import { axiosInstance } from "../lib/axios.js";
+import  axiosInstance  from "../services/axiosInstance";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 
-const BASE_URL = import.meta.env.MODE === "development" ? "http://localhost:5001" : "/";
+const BASE_URL = import.meta.env.MODE === "development" ? import.meta.env.VITE_BASE_URI : "/";
 
 console.log("BASE_URL",BASE_URL);
 
@@ -18,7 +18,7 @@ export const useAuthStore = create((set, get) => ({
 
   checkAuth: async () => {
     try {
-      const res = await axiosInstance.get("/auth/check");
+      const res = await axiosInstance.get("/user/profile");
 
       set({ authUser: res.data });
       get().connectSocket();
@@ -30,26 +30,26 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  signup: async (data) => {
-    set({ isSigningUp: true });
+
+  sendOtp: async (data) =>{
+    set({ isLoggingIn: true });
     try {
-      const res = await axiosInstance.post("/auth/signup", data);
-      set({ authUser: res.data });
-      toast.success("Account created successfully");
-      get().connectSocket();
+      const res = await axiosInstance.post("/auth/send-otp", data);
+      toast.success(`${res.data.message}`);
     } catch (error) {
       toast.error(error.response.data.message);
     } finally {
-      set({ isSigningUp: false });
+      set({ isLoggingIn: false });
     }
   },
 
-  login: async (data) => {
+
+  verifyOtp: async (data) =>{
     set({ isLoggingIn: true });
     try {
-      const res = await axiosInstance.post("/auth/login", data);
+      const res = await axiosInstance.post("/auth/verify-otp", data);
       set({ authUser: res.data });
-      toast.success("Logged in successfully");
+      toast.success(`${res.data.message}`);
 
       get().connectSocket();
     } catch (error) {
@@ -89,19 +89,29 @@ export const useAuthStore = create((set, get) => ({
     if (!authUser || get().socket?.connected) return;
 
     const socket = io(BASE_URL, {
-      query: {
-        userId: authUser._id,
-      },
+      withCredentials:true
     });
     socket.connect();
 
     set({ socket: socket });
 
-    socket.on("getOnlineUsers", (userIds) => {
-      set({ onlineUsers: userIds });
+    socket.emit("user_connect",authUser._id);
+
+    socket.emit("get_User_Status",{userId:authUser._id}, (response) => {
+      const isOnline = response.isOnline;
+      set((state) => ({
+        onlineUsers: isOnline
+        ? Array.from(new Set([...state.onlineUsers, response.userId]))
+        : state.onlineUsers.filter((id) => id !== response.userId),
+      }));
     });
+
   },
   disconnectSocket: () => {
-    if (get().socket?.connected) get().socket.disconnect();
+    const socket = get().socket;
+    if (socket?.connected) {
+      socket.disconnect();
+      set({ socket: null, onlineUsers: [], userStatusMap: {} });
+    }
   },
 }));
