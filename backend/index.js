@@ -11,7 +11,6 @@ import dbconnect from "./src/config/dbConnection.js";
 const app = express();
 const port = process.env.PORT || 5000;
 
-
 import indexRouter from './src/routes/index.routes.js'
 import initializeSocket from "./src/service/socketService.js";
 
@@ -29,11 +28,12 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 
 const server = http.createServer(app)
-const io = initializeSocket(server)
 
 app.use((req,res,next)=>{
+  let io = initializeSocket(server)
+  console.log(io);
   req.io = io,
-  req.socketUserMap = io.soketUserMap
+  req.socketUserMap = io?.soketUserMap || new Map()
   next()
 })
 //database connection

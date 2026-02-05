@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import OtpInput from "./OtpInput";
+import { useNavigate } from "react-router-dom";
 
 const OtpVerification = ({ 
   inputType, 
@@ -13,6 +14,7 @@ const OtpVerification = ({
   const [error, setError] = useState("");
   const [resendTimer, setResendTimer] = useState(30);
   const [canResend, setCanResend] = useState(false);
+  const navigate =useNavigate()
 
   // Countdown timer for resend
   useEffect(() => {
@@ -56,6 +58,7 @@ const OtpVerification = ({
     // Mock verification - accept any 6-digit OTP for demo
     // In real implementation, this would validate against backend
     onVerify(otp);
+    
   };
 
   const handleResend = () => {

@@ -1,7 +1,6 @@
 const generateOtp = ()=>{
-    const max = 999999;
-    const min = 100000
-    return Math.floor(Math.random() * (max-min+1))
+     const otp = Math.floor(100000 + Math.random() * 900000);
+    return otp.toString();
 }
 
 export {generateOtp}
