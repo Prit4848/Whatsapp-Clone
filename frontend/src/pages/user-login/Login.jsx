@@ -154,6 +154,7 @@ const Login = () => {
             onBack={() => setStep("input")}
             onVerify={handleOtpVerify}
             isLoading={isLoading}
+            onReset={handleSubmit}
           />
         )}
       </div>

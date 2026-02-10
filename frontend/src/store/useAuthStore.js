@@ -2,8 +2,6 @@ import { create } from "zustand";
 import  axiosInstance  from "../services/axiosInstance";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
-import {useNavigate} from "react-router-dom"
-
 
 const BASE_URL = import.meta.env.MODE === "development" ? import.meta.env.VITE_BASE_URI : "/";
 
@@ -24,11 +22,10 @@ export const useAuthStore = create((set, get) => ({
   try {
     const res = await axiosInstance.get("/user/profile");
     const user = res.data.data;
-
     set({
       authUser: user,
       isAuthenticated: true,
-      isProfileComplete: true ,
+      isProfileComplete: (res.data.data.profilePicture && res.data.data.username) ? true : false,
     });
 
   } catch (error) {
@@ -37,11 +34,9 @@ export const useAuthStore = create((set, get) => ({
       isAuthenticated: false,
     });
   } finally {
-    set({ isCheckingAuth: false });
+    set({ isCheckingAuth: false, });
   }
 },
-
-
 
   sendOtp: async (data) =>{
     set({ isLoggingIn: true });
@@ -55,7 +50,6 @@ export const useAuthStore = create((set, get) => ({
       set({ isLoggingIn: false });
     }
   },
-
 
   verifyOtp: async (data) =>{
     set({ isLoggingIn: true });
@@ -88,18 +82,41 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  ProfileSetup:async (data)=>{
-    set({ isLoggingIn: true });
-   try {
-     await axiosInstance.put("/user/update-profile",data,{headers:{"Content-Type":"multipart/form-data"}})
-     set({isProfileComplete:true})
-   } catch (error) {
-     const errorMessage = error.response.data.message || error.message
-      toast.error(errorMessage);
-    } finally {
-      set({ isLoggingIn: false });
+  ProfileSetup: async (data) => {
+  set({ isLoggingIn: true });
+  try {
+   const formData = new FormData();
+   
+    if(data.username) formData.append("username", data.username);
+    if(data.about) formData.append("about", data.about);
+    if(data.agreed) formData.append("agreed", data.agreed);
+
+    if (data.media instanceof File) {
+      formData.append("media", data.media);
+    } else if (typeof data.media === "string" && data.media.trim() !== "") {
+      formData.append("media", data.media);
     }
-  },
+   console.log(formData);
+   
+    await axiosInstance.put("/user/update-profile", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    set((state) => ({
+      authUser: { ...state.authUser, ...data }, 
+      isProfileComplete: true 
+    }));
+    
+    toast.success("Profile updated successfully");
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || error.message;
+    toast.error(errorMessage);
+  } finally {
+    set({ isLoggingIn: false });
+  }
+},
 
   updateProfile: async (data) => {
     set({ isUpdatingProfile: true });

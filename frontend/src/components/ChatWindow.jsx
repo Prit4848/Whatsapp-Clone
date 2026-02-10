@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { ArrowLeft, MoreVertical, Phone, Video } from "lucide-react";
-import useChatStore from "../store/useChatStore";
+import {useChatStore} from "../store/useChatStore";
 import Avatar from "./Avatar";
 import MessageBubble from "./MessageBubble";
 import MessageInput from "./MessageInput";
@@ -19,9 +19,9 @@ const ChatWindow = () => {
     isMobileView 
   } = useChatStore();
 
-  const chat = chats.find((c) => c.id === activeChat);
-  const partner = chat ? getChatPartner(chat) : null;
-  const chatMessages = messages[activeChat] || [];
+  const chat = chats.find((c) => c._id === activeChat);
+  const partner = chat?.participants?.find((p)=> p != "current") || [];;
+  const chatMessages = messages || [];
   const isTyping = typingUsers[activeChat];
 
   // Auto-scroll to bottom when messages change
@@ -70,17 +70,17 @@ const ChatWindow = () => {
 
         {/* User info */}
         <Avatar
-          src={partner.avatar}
-          alt={partner.name}
+          src={partner.profilePicture}
+          alt={partner.username}
           size="md"
-          isOnline={partner.status === "online"}
+          isOnline={partner.isOnline}
         />
         <div className="flex-1 min-w-0">
-          <h2 className="font-medium text-foreground truncate">{partner.name}</h2>
+          <h2 className="font-medium text-foreground truncate">{partner.username}</h2>
           <p className="text-xs text-muted-foreground truncate">
             {isTyping ? (
               <span className="text-primary">typing...</span>
-            ) : partner.status === "online" ? (
+            ) : partner.isOnline ? (
               "online"
             ) : (
               formatLastSeen(partner.lastSeen)
@@ -112,26 +112,27 @@ const ChatWindow = () => {
       </header>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-2 chat-pattern scrollbar-thin">
-        {chatMessages.map((message) => (
-          <MessageBubble
-            key={message.id}
-            message={message}
-            isOwn={message.senderId === "current"}
-          />
-        ))}
-        
-        {/* Typing indicator */}
-        {isTyping && (
-          <div className="flex items-center gap-2">
-            <div className="bg-bubble-incoming rounded-lg rounded-bl-sm shadow-sm">
-              <TypingIndicator />
-            </div>
-          </div>
-        )}
-        
-        <div ref={messagesEndRef} />
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-2 chat-pattern scrollbar-thin">
+  {chatMessages.map((message) => (
+    <MessageBubble
+      key={message._id}
+      message={message}
+      isOwn={message.sender === "current"}
+    />
+  ))}
+
+  {/* Typing indicator */}
+  {isTyping && (
+    <div className="flex items-center gap-2">
+      <div className="bg-bubble-incoming rounded-lg rounded-bl-sm shadow-sm">
+        <TypingIndicator />
       </div>
+    </div>
+  )}
+
+  <div ref={messagesEndRef} />
+</div>
+
 
       {/* Message Input */}
       <MessageInput />

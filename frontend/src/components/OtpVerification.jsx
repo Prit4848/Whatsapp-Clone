@@ -8,7 +8,8 @@ const OtpVerification = ({
   inputValue, 
   onBack, 
   onVerify, 
-  isLoading 
+  isLoading,
+  onReset 
 }) => {
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
@@ -19,7 +20,7 @@ const OtpVerification = ({
   // Countdown timer for resend
   useEffect(() => {
     if (resendTimer > 0) {
-      const timer = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
+      const timer = setTimeout(() => setResendTimer(resendTimer - 1), 5000);
       return () => clearTimeout(timer);
     } else {
       setCanResend(true);
@@ -65,11 +66,11 @@ const OtpVerification = ({
     if (!canResend) return;
     
     // Reset timer
-    setResendTimer(30);
+    setResendTimer(300);
     setCanResend(false);
     setOtp("");
     setError("");
-    
+    onReset()
     // Mock resend - in real implementation, this would call API
     console.log("Resending OTP to:", inputValue);
   };

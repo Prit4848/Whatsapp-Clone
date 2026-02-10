@@ -4,20 +4,35 @@ import Index from "./pages/Index/Index";
 import NotFound from "./pages/notfound-page/NotFound";
 import { useEffect } from "react";
 import { useAuthStore } from "./store/useAuthStore";
+import { useChatStore } from "./store/useChatStore";
+import ProfilePage from "./pages/profile-setup/ProfilePage";
+import { currentUser } from "./data/mockData";
 
 const App = () => {
 
-  const {checkAuth,isCheckingAuth} = useAuthStore()  
+  const {checkAuth,isCheckingAuth,authUser} = useAuthStore()  
+  const {setAllChats,activeChat,setMessage} = useChatStore()
   useEffect(() => {
     if (!isCheckingAuth) return;
-    checkAuth()
-  }, [])
+    checkAuth();
+  }, []);
+  useEffect(() => {
+    if (authUser) {
+      setAllChats();
+    }
+  }, [authUser]);
+  useEffect(()=>{
+    if(activeChat){
+      setMessage()
+    }
+  },[activeChat])
   return (
     <>
     <Toaster position="top-center" />
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Index />} />
+        <Route path="/profile" element={authUser ? <ProfilePage /> : <Index/>} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>

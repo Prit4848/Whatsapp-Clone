@@ -17,7 +17,7 @@ import initializeSocket from "./src/service/socketService.js";
 //middleware
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL,
+    origin:[process.env.FRONTEND_URL,process.env.FRONTEND_URL1] ,
     credentials:true
   }),
 );

@@ -9,10 +9,10 @@ const MessageBubble = ({ message, isOwn }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(message.content);
   const menuRef = useRef(null);
-  
-  const isImage = message.type === "image";
-  const isVideo = message.type === "video";
-  const isText = message.type === "text";
+
+  const isImage = message.contentType === "image";
+  const isVideo = message.contentType === "video";
+  const isText = message.contentType === "text";
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -58,10 +58,14 @@ const MessageBubble = ({ message, isOwn }) => {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => !isMenuOpen && setIsHovered(false)}
     >
-      <div className={`relative flex items-start gap-1 ${isOwn ? "flex-row-reverse" : "flex-row"}`}>
+      <div
+        className={`relative flex items-start gap-1 w-full min-w-0 ${
+          isOwn ? "flex-row-reverse" : "flex-row"
+        }`}
+      >
         {/* Message bubble */}
         <div
-          className={`max-w-[75%] md:max-w-[60%] rounded-lg px-3 py-2 shadow-sm ${
+          className={`min-w-0 max-w-[75%] md:max-w-[60%] break-words rounded-lg px-3 py-2 shadow-sm ${
             isOwn
               ? "bg-bubble-outgoing text-bubble-outgoing-foreground rounded-br-sm"
               : "bg-bubble-incoming text-bubble-incoming-foreground rounded-bl-sm"
@@ -71,13 +75,13 @@ const MessageBubble = ({ message, isOwn }) => {
           {isImage && (
             <div className="mb-1">
               <img
-                src={message.content}
+                src={message.imageOrVideoUrl}
                 alt="Shared image"
                 className="rounded-md max-w-full h-auto"
                 loading="lazy"
               />
-              {message.caption && (
-                <p className="mt-2 text-sm">{message.caption}</p>
+              {message.content && (
+                <p className="mt-2 text-sm">{message.content}</p>
               )}
             </div>
           )}
@@ -86,19 +90,19 @@ const MessageBubble = ({ message, isOwn }) => {
           {isVideo && (
             <div className="mb-1">
               <video
-                src={message.content}
+                src={message.imageOrVideoUrl}
                 controls
                 className="rounded-md max-w-full h-auto"
               />
-              {message.caption && (
-                <p className="mt-2 text-sm">{message.caption}</p>
+              {message.content && (
+                <p className="mt-2 text-sm">{message.content}</p>
               )}
             </div>
           )}
 
           {/* Text message - with editing support */}
-          {isText && (
-            isEditing ? (
+          {isText &&
+            (isEditing ? (
               <div className="min-w-[200px]">
                 <textarea
                   value={editText}
@@ -127,11 +131,12 @@ const MessageBubble = ({ message, isOwn }) => {
               <p className="text-sm whitespace-pre-wrap break-words">
                 {message.content}
                 {message.isEdited && (
-                  <span className="text-[10px] text-muted-foreground ml-1">(edited)</span>
+                  <span className="text-[10px] text-muted-foreground ml-1">
+                    (edited)
+                  </span>
                 )}
               </p>
-            )
-          )}
+            ))}
 
           {/* Time and status */}
           {!isEditing && (
@@ -141,9 +146,9 @@ const MessageBubble = ({ message, isOwn }) => {
               }`}
             >
               <span className="text-[10px] text-muted-foreground">
-                {formatMessageTime(message.timestamp)}
+                {formatMessageTime(message.createdAt)}
               </span>
-              {isOwn && <MessageStatus status={message.status} />}
+              {isOwn && <MessageStatus status={message.messageStatus} />}
             </div>
           )}
         </div>
@@ -158,9 +163,9 @@ const MessageBubble = ({ message, isOwn }) => {
             >
               <MoreVertical className="w-4 h-4 text-muted-foreground" />
             </button>
-            
+
             {isMenuOpen && (
-              <div 
+              <div
                 className={`absolute bottom-full mb-1 ${isOwn ? "right-0" : "left-0"} w-40 p-1 bg-popover border border-border rounded-md shadow-md z-50`}
               >
                 <div className="flex flex-col">

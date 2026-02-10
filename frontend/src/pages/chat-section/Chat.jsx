@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import useChatStore from "../../store/useChatStore";
+import {useChatStore} from "../../store/useChatStore";
 import ChatSidebar from "../../components/ChatSidebar";
 import ChatWindow from "../../components/ChatWindow";
 
