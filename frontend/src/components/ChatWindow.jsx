@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { ArrowLeft, MoreVertical, Phone, Video } from "lucide-react";
 import {useChatStore} from "../store/useChatStore";
+import { useAuthStore } from "../store/useAuthStore";
 import Avatar from "./Avatar";
 import MessageBubble from "./MessageBubble";
 import MessageInput from "./MessageInput";
@@ -16,8 +17,10 @@ const ChatWindow = () => {
     messages, 
     typingUsers, 
     clearActiveChat,
-    isMobileView 
+    isMobileView,
+    receiveMessage 
   } = useChatStore();
+  const {socket} = useAuthStore()
 
   const chat = chats.find((c) => c._id === activeChat);
   const partner = chat?.participants?.find((p)=> p != "current") || [];;
@@ -28,6 +31,11 @@ const ChatWindow = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages, isTyping]);
+  useEffect(() => {
+  if (socket) {
+    receiveMessage();
+  }
+}, [socket]);
 
   if (!activeChat || !partner) {
     return (
@@ -118,6 +126,7 @@ const ChatWindow = () => {
       key={message._id}
       message={message}
       isOwn={message.sender === "current"}
+      value={chat}
     />
   ))}
 

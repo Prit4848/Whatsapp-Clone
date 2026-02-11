@@ -6,12 +6,13 @@ import { useEffect } from "react";
 import { useAuthStore } from "./store/useAuthStore";
 import { useChatStore } from "./store/useChatStore";
 import ProfilePage from "./pages/profile-setup/ProfilePage";
-import { currentUser } from "./data/mockData";
 
 const App = () => {
 
-  const {checkAuth,isCheckingAuth,authUser} = useAuthStore()  
+  const {checkAuth,isCheckingAuth,authUser,connectSocket} = useAuthStore()  
   const {setAllChats,activeChat,setMessage} = useChatStore()
+
+  
   useEffect(() => {
     if (!isCheckingAuth) return;
     checkAuth();
@@ -26,6 +27,11 @@ const App = () => {
       setMessage()
     }
   },[activeChat])
+  useEffect(() => {
+  if (authUser) {
+    connectSocket();
+  }
+}, [authUser]);
   return (
     <>
     <Toaster position="top-center" />

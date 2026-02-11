@@ -31,6 +31,7 @@ export const updateProfile = asyncHandler(async (req, res) => {
 });
 
 export const authorizedUser = asyncHandler(async (req, res) => {
+  res.set("Cache-Control", "no-store");
   const userId = req.user._id;
   if (!userId) {
     return response(res, 400, "Unathorized User");
@@ -52,8 +53,9 @@ export const allUsers = asyncHandler(async (req, res) => {
       notInclude.add(id.toString());
     });
   });
+  notInclude.add(userId)
 
-  const users = await User.find({ _id: { $nin:Array.from(notInclude)} })
+  const users = await User.find({ _id: { $nin:Array.from(notInclude)}})
     .select(
       "username profilePicture lastSeen isOnline about email phoneNumber phoneSuffix _id",
     )

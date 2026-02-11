@@ -29,11 +29,13 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 const server = http.createServer(app)
 
+let io = initializeSocket(server)
+app.set("io", io);
 app.use((req,res,next)=>{
-  let io = initializeSocket(server)
-  console.log(io);
-  req.io = io,
-  req.socketUserMap = io?.soketUserMap || new Map()
+  req.io = app.get("io"),
+  req.socketUserMap = req.io?.socketUserMap
+  console.log(req.io?.socketUserMap);
+  
   next()
 })
 //database connection

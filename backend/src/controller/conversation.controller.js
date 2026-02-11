@@ -26,7 +26,7 @@ export const getConversations = asyncHandler(async (req,res)=>{
 })
 
 export const createConversation = asyncHandler(async (req,res)=>{
-    const userId = res.user._id;
+    const userId = req.user._id;
     const {participant} = req.body;
 
     if(!participant){
@@ -47,6 +47,6 @@ export const createConversation = asyncHandler(async (req,res)=>{
 
     await conversation.save()
 
-    return response(res,200,"Conversation Create Succesfully!",conversation)
+    return response(res,200,"Conversation Create Succesfully!",{conversation:conversation})
 })
 

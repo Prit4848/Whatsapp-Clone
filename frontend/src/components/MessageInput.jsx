@@ -1,12 +1,24 @@
 import { useState } from "react";
 import { Send, Paperclip, Smile, Mic } from "lucide-react";
+import { useChatStore } from "../store/useChatStore";
+import toast from "react-hot-toast";
 
-const MessageInput = () => {
+const MessageInput = ({chat}) => {
   const [message, setMessage] = useState("");
+  const { sendMessage } = useChatStore()
 
   const handleSubmit = (e) => {
     e.preventDefault();
     // UI only - no functionality
+    try {
+       if (!message.trim()) return;
+       sendMessage(message)
+    } catch (error) {
+      const errorMessage = error?.response?.data?.message || error?.message
+      toast.error(`${errorMessage}`)
+    }finally{
+      setMessage('')
+    }
   };
 
   return (

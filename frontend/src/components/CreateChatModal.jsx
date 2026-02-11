@@ -2,12 +2,15 @@ import { useState, useEffect, useRef, use } from "react";
 import { X, Search } from "lucide-react";
 import { users } from "../data/mockData";
 import { useUserStore } from "../store/useUserStore";
+import {useChatStore} from "../store/useChatStore"
 import Avatar from "./Avatar";
+import AppLoader from "./Loader";
 
 const CreateChatModal = ({ isOpen, onClose }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const modalRef = useRef(null);
   const {allUsers,setAllUsers} = useUserStore()
+  const {isCreateChat,createChat} = useChatStore()
 
   useEffect(() => {
     setAllUsers()
@@ -21,6 +24,7 @@ const CreateChatModal = ({ isOpen, onClose }) => {
 
   const handleSelectUser = (user) => {
     // UI only - just close the modal
+   createChat(user._id)
     onClose();
   };
 
@@ -49,6 +53,10 @@ const CreateChatModal = ({ isOpen, onClose }) => {
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
+
+   if (isCreateChat) {
+      return <AppLoader/>;
+    }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">

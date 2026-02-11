@@ -210,10 +210,11 @@ const initializeSocket = (server)=>{
 
         socket.on("disconect",handleDisconected)
 
-        io.soketUserMap = OnlineUsers
-
-        return io  
+        
     })
+    io.socketUserMap = OnlineUsers
+
+    return io  
 }
 
 export default initializeSocket;

@@ -11,7 +11,7 @@ const Login = () => {
   const [step, setStep] = useState("input");
   const [error, setError] = useState("");
   
-  const { sendOtp, verifyOtp, isLoading } = useAuthStore();
+  const { sendOtp, verifyOtp, isLoggingIn } = useAuthStore();
   const countryData = useRef(countries);
 
   // Determine active method based on which field has content
@@ -83,7 +83,7 @@ const Login = () => {
                 <select
                   value={phoneSuffix}
                   onChange={(e) => setPhoneSuffix(e.target.value)}
-                  disabled={isLoading || !!email}
+                  disabled={isLoggingIn || !!email}
                   className="px-2 py-3 bg-muted rounded-lg text-foreground disabled:opacity-50"
                 >
                   {countryData.current.map((c) => (
@@ -104,7 +104,7 @@ const Login = () => {
                       setError("");
                     }}
                     placeholder="Phone number"
-                    disabled={isLoading || !!email}
+                    disabled={isLoggingIn || !!email}
                     className="w-full pl-11 pr-4 py-3 bg-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
                   />
                 </div>
@@ -131,7 +131,7 @@ const Login = () => {
                     setError("");
                   }}
                   placeholder="name@example.com"
-                  disabled={isLoading || !!phoneNumber}
+                  disabled={isLoggingIn || !!phoneNumber}
                   className="w-full pl-11 pr-4 py-3 bg-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
                 />
               </div>
@@ -141,10 +141,10 @@ const Login = () => {
 
             <button
               type="submit"
-              disabled={isLoading || !isValid()}
+              disabled={isLoggingIn || !isValid()}
               className="w-full py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
             >
-              {isLoading ? "Processing..." : "Continue"}
+              {isLoggingIn ? "Processing..." : "Continue"}
             </button>
           </form>
         ) : (
@@ -153,7 +153,7 @@ const Login = () => {
             inputValue={activeMethod === "email" ? email : phoneNumber}
             onBack={() => setStep("input")}
             onVerify={handleOtpVerify}
-            isLoading={isLoading}
+            isLoading={isLoggingIn}
             onReset={handleSubmit}
           />
         )}

@@ -20,12 +20,17 @@ export const useAuthStore = create((set, get) => ({
 
   checkAuth: async () => {
   try {
-    const res = await axiosInstance.get("/user/profile");
+    const res = await axiosInstance.get("/user/profile", {
+      headers: {
+        "Cache-Control": "no-cache",
+      },
+    });
+    
     const user = res.data.data;
     set({
       authUser: user,
       isAuthenticated: true,
-      isProfileComplete: (res.data.data.profilePicture && res.data.data.username) ? true : false,
+      isProfileComplete: (user.profilePicture && user.username) ? true : false,
     });
 
   } catch (error) {

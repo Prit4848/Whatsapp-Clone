@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 import MessageStatus from "./MessageStatus";
 import { formatMessageTime } from "../utils/helpers";
+import { useAuthStore } from "../store/useAuthStore";
+import { useChatStore } from "../store/useChatStore";
 
 const MessageBubble = ({ message, isOwn }) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -9,6 +11,8 @@ const MessageBubble = ({ message, isOwn }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(message.content);
   const menuRef = useRef(null);
+  const {socket} = useAuthStore()
+ 
 
   const isImage = message.contentType === "image";
   const isVideo = message.contentType === "video";
@@ -166,7 +170,7 @@ const MessageBubble = ({ message, isOwn }) => {
 
             {isMenuOpen && (
               <div
-                className={`absolute bottom-full mb-1 ${isOwn ? "right-0" : "left-0"} w-40 p-1 bg-popover border border-border rounded-md shadow-md z-50`}
+                className={`relative bottom-full mb-1 ${isOwn ? "right-0" : "left-0"} w-40 p-1 bg-popover border border-border rounded-md shadow-md z-50`}
               >
                 <div className="flex flex-col">
                   {/* Edit option - only for own text messages */}
