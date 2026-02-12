@@ -25,7 +25,9 @@ const ChatWindow = () => {
   const chat = chats.find((c) => c._id === activeChat);
   const partner = chat?.participants?.find((p)=> p != "current") || [];;
   const chatMessages = messages || [];
-  const isTyping = typingUsers[activeChat];
+  const isTyping =
+  typingUsers.get(activeChat)?.size > 0;
+
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {

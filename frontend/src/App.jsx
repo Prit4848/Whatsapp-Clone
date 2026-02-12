@@ -9,8 +9,8 @@ import ProfilePage from "./pages/profile-setup/ProfilePage";
 
 const App = () => {
 
-  const {checkAuth,isCheckingAuth,authUser,connectSocket} = useAuthStore()  
-  const {setAllChats,activeChat,setMessage} = useChatStore()
+  const {checkAuth,isCheckingAuth,authUser,connectSocket,disconnectSocket,socket} = useAuthStore()  
+  const {setAllChats,activeChat,setMessage,initializeSocketListeners} = useChatStore()
 
   
   useEffect(() => {
@@ -22,16 +22,26 @@ const App = () => {
       setAllChats();
     }
   }, [authUser]);
-  useEffect(()=>{
-    if(activeChat){
-      setMessage()
-    }
-  },[activeChat])
   useEffect(() => {
-  if (authUser) {
-    connectSocket();
-  }
-}, [authUser]);
+    if (activeChat) {
+      setMessage();
+    }
+  }, [activeChat]);
+  useEffect(() => {
+    if (authUser) {
+      connectSocket();
+    }
+
+    return () => {
+      disconnectSocket();
+    };
+  }, [authUser]);
+  useEffect(() => {
+    if(socket){
+      initializeSocketListeners()
+    }
+  }, [socket])
+  
   return (
     <>
     <Toaster position="top-center" />

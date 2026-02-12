@@ -35,7 +35,7 @@ const initializeSocket = (server)=>{
           }
         });
 
-        socket.on("get_User_Status", (requestedUserId, callback) => {
+        socket.on("get_user_status", (requestedUserId, callback) => {
           const isOnline = OnlineUsers.has(requestedUserId);
           callback({
             userId: requestedUserId,
@@ -59,24 +59,31 @@ const initializeSocket = (server)=>{
         });
 
         socket.on("message_read", async ({ messageIds, senderId }) => {
-          try {
-            await Message.updateMany(
-              { _id: { $in: messageIds } },
-              { $set: { messageStatus: "read" } },
-            );
-            const senderSocketId = OnlineUsers(senderId);
-            if (senderSocketId) {
-              messageIds.forEach((messageId) => {
-                io.to(senderSocketId).emit("message_status_update", {
-                  messageId,
-                  messageStatus: "read",
-                });
-              });
-            }
-          } catch (error) {
-            console.log("Error Updating Message", error.message);
-          }
+              console.log("receive",messageIds,senderId);
+  try {
+    await Message.updateMany(
+      { _id: { $in: messageIds } },
+      { $set: { messageStatus: "read" } }
+    );
+
+    const senderSocketId = OnlineUsers.get(senderId);
+
+    if (senderSocketId) {
+      messageIds.forEach((messageId) => {
+        io.to(senderSocketId).emit("message_status_update", {
+          messageId,
+          messageStatus: "read",
         });
+      });
+      console.log("read");
+      
+    }
+
+  } catch (error) {
+    console.log("Error Updating Message", error.message);
+  }
+});
+
 
         socket.on("typing_start", (conversationId, receverId) => {
           if (!userId || !conversationId || !receverId) return;

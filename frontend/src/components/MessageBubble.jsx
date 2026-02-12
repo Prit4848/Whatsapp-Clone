@@ -11,12 +11,40 @@ const MessageBubble = ({ message, isOwn }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(message.content);
   const menuRef = useRef(null);
+  const bubbleRef = useRef(null);
   const {socket} = useAuthStore()
+  const {markMessageRead } = useChatStore()
  
 
   const isImage = message.contentType === "image";
   const isVideo = message.contentType === "video";
   const isText = message.contentType === "text";
+
+
+  useEffect(() => {
+  if (!bubbleRef.current) return;
+  if (isOwn) return; // Only mark incoming messages as read
+  if (message.messageStatus === "read") return;
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          markMessageRead(message._id);
+        }
+      });
+    },
+    { threshold: 0.6 } // 60% visible
+  );
+
+  observer.observe(bubbleRef.current);
+
+  return () => {
+    if (bubbleRef.current) {
+      observer.unobserve(bubbleRef.current);
+    }
+  };
+}, [message._id, message.messageStatus]);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -58,6 +86,7 @@ const MessageBubble = ({ message, isOwn }) => {
 
   return (
     <div
+        ref={bubbleRef}
       className={`flex ${isOwn ? "justify-end" : "justify-start"} animate-message-in`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => !isMenuOpen && setIsHovered(false)}
