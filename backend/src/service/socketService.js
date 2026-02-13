@@ -29,7 +29,7 @@ const initializeSocket = (server)=>{
               lastSeen: new Date(),
             });
 
-            io.emit("User_Status", { userId, isOnline: true });
+            io.emit("User_Status", { userId, isOnline: true,lastSeen:null });
           } catch (error) {
             console.error("Error Handling User Connection", error.message);
           }
@@ -59,30 +59,27 @@ const initializeSocket = (server)=>{
         });
 
         socket.on("message_read", async ({ messageIds, senderId }) => {
-              console.log("receive",messageIds,senderId);
-  try {
-    await Message.updateMany(
-      { _id: { $in: messageIds } },
-      { $set: { messageStatus: "read" } }
-    );
+          try {
+            await Message.updateMany(
+              { _id: { $in: messageIds } },
+              { $set: { messageStatus: "read" } },
+            );
 
-    const senderSocketId = OnlineUsers.get(senderId);
+            const senderSocketId = OnlineUsers.get(senderId);
 
-    if (senderSocketId) {
-      messageIds.forEach((messageId) => {
-        io.to(senderSocketId).emit("message_status_update", {
-          messageId,
-          messageStatus: "read",
+            if (senderSocketId) {
+              messageIds.forEach((messageId) => {
+                io.to(senderSocketId).emit("message_status_update", {
+                  messageId,
+                  messageStatus: "read"
+                });
+              });
+              console.log("read");
+            }
+          } catch (error) {
+            console.log("Error Updating Message", error.message);
+          }
         });
-      });
-      console.log("read");
-      
-    }
-
-  } catch (error) {
-    console.log("Error Updating Message", error.message);
-  }
-});
 
 
         socket.on("typing_start", (conversationId, receverId) => {

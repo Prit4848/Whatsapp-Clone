@@ -13,7 +13,7 @@ const MessageBubble = ({ message, isOwn }) => {
   const menuRef = useRef(null);
   const bubbleRef = useRef(null);
   const {socket} = useAuthStore()
-  const {markMessageRead } = useChatStore()
+  const {markMessageRead ,setunreadCountZero} = useChatStore()
  
 
   const isImage = message.contentType === "image";
@@ -59,6 +59,13 @@ const MessageBubble = ({ message, isOwn }) => {
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isMenuOpen]);
+
+  useEffect(() => {
+    if(socket){
+      setunreadCountZero()
+    }
+  }, [socket])
+  
 
   const handleEdit = () => {
     setIsEditing(true);

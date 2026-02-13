@@ -1,6 +1,5 @@
-import { useState, useEffect, useRef, use } from "react";
+import { useState, useEffect, useRef, } from "react";
 import { X, Search } from "lucide-react";
-import { users } from "../data/mockData";
 import { useUserStore } from "../store/useUserStore";
 import {useChatStore} from "../store/useChatStore"
 import Avatar from "./Avatar";
@@ -9,8 +8,8 @@ import AppLoader from "./Loader";
 const CreateChatModal = ({ isOpen, onClose }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const modalRef = useRef(null);
-  const {allUsers,setAllUsers} = useUserStore()
-  const {isCreateChat,createChat} = useChatStore()
+  const {allUsers,setAllUsers,getUserStatus} = useUserStore()
+  const {isCreateChat,createChat,} = useChatStore()
 
   useEffect(() => {
     setAllUsers()
@@ -108,7 +107,7 @@ const CreateChatModal = ({ isOpen, onClose }) => {
                   alt={user.username}
                   size="md"
                   showStatus
-                  isOnline={user.isOnline === true}
+                  isOnline={getUserStatus(user._id)}
                 />
                 <div className="flex-1 text-left">
                   <h3 className="font-medium text-foreground">

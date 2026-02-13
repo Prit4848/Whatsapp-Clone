@@ -1,4 +1,5 @@
 import Conversation from "../models/Conversation.js";
+import Message from "../models/Message.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { response } from "../utils/responseHandler.js";
 
@@ -48,5 +49,30 @@ export const createConversation = asyncHandler(async (req,res)=>{
     await conversation.save()
 
     return response(res,200,"Conversation Create Succesfully!",{conversation:conversation})
+})
+
+export const deleteChat = asyncHandler(async (req,res)=>{
+    const {conversationId} = req.params;
+    const userId = req.user._id
+    if(!conversationId){
+        return response(res,404,"Conversation Id Is not Found")
+    }
+    const conversation = await Conversation.findOne({_id:conversationId})
+
+    if(!conversation){
+        return response(res,404,"Conversation Not Foud")
+    }
+
+    if(!conversation.participants.includes(userId)){
+        return response(res,403,"You are not Allow to delete the message")
+    }
+
+    await Message.deleteMany({
+      conversation:conversationId,
+    });
+
+    await Conversation.deleteOne({_id:conversationId})
+
+    return response(res,200,"Conversation Deleted Successfully")
 })
 

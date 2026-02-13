@@ -6,5 +6,6 @@ const router = Router()
 
 router.route("/").get(authUser,conversationController.getConversations)
 router.route("/").post(authUser,conversationController.createConversation)
+router.route("/:conversationId/delete").delete(authUser)
 
 export default router

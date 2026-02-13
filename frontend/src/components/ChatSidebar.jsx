@@ -15,7 +15,7 @@ const ChatSidebar = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
    const [isCreateChatOpen, setIsCreateChatOpen] = useState(false);
-  const { chats, currentUser, isLoading } = useChatStore();
+  const { chats, currentUser, isLoading,updateUserStatus } = useChatStore();
   const {authUser,logout}=useAuthStore()
   const navigate = useNavigate()
 

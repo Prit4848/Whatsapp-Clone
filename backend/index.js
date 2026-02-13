@@ -34,8 +34,6 @@ app.set("io", io);
 app.use((req,res,next)=>{
   req.io = app.get("io"),
   req.socketUserMap = req.io?.socketUserMap
-  console.log(req.io?.socketUserMap);
-  
   next()
 })
 //database connection

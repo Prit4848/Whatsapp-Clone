@@ -93,18 +93,13 @@ export const useChatStore = create((set, get) => ({
     // ===============================
     // MESSAGE STATUS UPDATE
     // ===============================
-  socket.on("message_status_update", ({ messageId, messageStatus }) => {
-    console.log("receive",messageId, messageStatus);
-    
-  set((state) => ({
-    messages: state.messages.map((msg) =>
-      msg._id === messageId
-        ? { ...msg, messageStatus }
-        : msg
-    ),
-  }));
-});
-
+    socket.on("message_status_update", ({ messageId, messageStatus }) => {
+      set((state) => ({
+        messages: state.messages.map((msg) =>
+          msg._id === messageId ? { ...msg, messageStatus } : msg,
+        ),
+      }));
+    });
 
     // ===============================
     // MESSAGE DELETED
@@ -226,16 +221,17 @@ export const useChatStore = create((set, get) => ({
         createdAt: createdConversationresponse.lastMessage.createdAt,
         updatedAt: createdConversationresponse.lastMessage.createdAt,
       };
-
+       
       set((state) => ({
         chats: [...state.chats, createdConversation],
       }));
+      set({ isCreateChat: false });
     } catch (error) {
       const errorMessage =
         error.response.data.messages ||
         error.messages ||
         "Something Went Wrong Please Try Again ";
-      console.log(errorMessage);
+      toast.error(`${errorMessage}`)
     } finally {
       set({ isCreateChat: false });
     }
@@ -328,8 +324,6 @@ export const useChatStore = create((set, get) => ({
     if (!socket) return;
 
     socket.off("receive_message");
-    console.log(socket);
-
     socket.on("receive_message", (newMessage) => {
       set((state) => {
         const updatedChats = state.chats.map((chat) => {
@@ -355,33 +349,28 @@ export const useChatStore = create((set, get) => ({
   },
 
   markMessageRead: async (messageId) => {
-  const { socket, authUser } = useAuthStore.getState();
+    const { socket, authUser } = useAuthStore.getState();
 
-  try {
-    await axiosInstance.put("/message/read", {
-      messageId: [messageId],
-    });
+    try {
+      await axiosInstance.put("/message/read", {
+        messageId: [messageId],
+      });
 
-    // Optimistic update
-    set((state) => ({
-      messages: state.messages.map((msg) =>
-        msg._id === messageId
-          ? { ...msg, messageStatus: "read" }
-          : msg
-      ),
-    }));
-    console.log("mark read call");
-    
-    socket?.emit("message_read", {
-      messageIds: [messageId],
-      senderId: authUser._id, // important
-    });
-
-  } catch (error) {
-    console.error(error?.response?.data?.message || error.message);
-  }
-},
-
+      // Optimistic update
+      set((state) => ({
+        messages: state.messages.map((msg) =>
+          msg._id === messageId ? { ...msg, messageStatus: "read" } : msg,
+        ),
+      }));
+      const message = get().messages.find((m) => m._id === messageId);
+      socket?.emit("message_read", {
+        messageIds: [messageId],
+        senderId: message.sender, // important
+      });
+    } catch (error) {
+      console.error(error?.response?.data?.message || error.message);
+    }
+  },
 
   deleteMessage: async (messageId) => {
     try {
@@ -449,6 +438,41 @@ export const useChatStore = create((set, get) => ({
     return onlineUsers.get(userId)?.lastSeen || null;
   },
 
+  setunreadCountZero: () => {
+    const { activeChat, chats } = get();
+    const currentChat = chats.find((c) => activeChat === c._id);
+    if (!currentChat) return;
+    set((state) => {
+      const currentChatupdate = state.chats.map((chat) => {
+        if (currentChat._id === chat._id) {
+          return {
+            ...chat,
+            unreadCount: 0,
+          };
+        }
+        return chat;
+      });
+      return {
+        chats: currentChatupdate,
+      };
+    });
+  },
+  updateUserStatus:(userId)=>{
+   const {socket} = useAuthStore.getState()
+   if(!userId && !socket) return;
+   socket.emit("get_user_status",userId,(response)=>{
+     set((state)=>{
+      const updateMap = new Map(state.onlineUsers)
+      updateMap.set(response.userId,{
+        isOnline:response.isOnline,
+        lastSeen:response.lastSeen
+      })
+      return {
+        onlineUsers:updateMap
+      }
+     })
+   })
+  },
   cleanup: () => {
     const { socket } = useAuthStore.getState();
     socket?.removeAllListeners();

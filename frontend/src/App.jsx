@@ -10,7 +10,7 @@ import ProfilePage from "./pages/profile-setup/ProfilePage";
 const App = () => {
 
   const {checkAuth,isCheckingAuth,authUser,connectSocket,disconnectSocket,socket} = useAuthStore()  
-  const {setAllChats,activeChat,setMessage,initializeSocketListeners} = useChatStore()
+  const {setAllChats,activeChat,setMessage,initializeSocketListeners,isCreateChat} = useChatStore()
 
   
   useEffect(() => {
@@ -21,7 +21,7 @@ const App = () => {
     if (authUser) {
       setAllChats();
     }
-  }, [authUser]);
+  }, [authUser,isCreateChat]);
   useEffect(() => {
     if (activeChat) {
       setMessage();

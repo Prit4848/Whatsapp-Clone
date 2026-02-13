@@ -6,6 +6,7 @@ export const formatMessageTime = (timestamp) => {
 };
 
 export const formatChatTime = (timestamp) => {
+  if(!timestamp) return "";
   const date = new Date(timestamp);
   
   if (isToday(date)) {
@@ -36,7 +37,7 @@ export const formatLastSeen = (timestamp) => {
     return `last seen yesterday at ${format(date, "h:mm a")}`;
   }
   
-  return `last seen ${format(date, "MM/dd/yyyy")}`;
+  return `last seen ${format(date, "dd/MM/yyyy")}`;
 };
 
 export const truncateText = (text, maxLength = 50) => {

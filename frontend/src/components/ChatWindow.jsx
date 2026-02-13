@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { ArrowLeft, MoreVertical, Phone, Video } from "lucide-react";
+import { ArrowLeft, MoreVertical, Phone, Video, Trash2,Eraser} from "lucide-react";
 import {useChatStore} from "../store/useChatStore";
 import { useAuthStore } from "../store/useAuthStore";
 import Avatar from "./Avatar";
@@ -8,6 +8,8 @@ import MessageInput from "./MessageInput";
 import TypingIndicator from "./TypingIndicator";
 import { formatLastSeen } from "../utils/helpers";
 import { getChatPartner } from "../data/mockData";
+import {useUserStore} from "../store/useUserStore"
+import { useState } from "react";
 
 const ChatWindow = () => {
   const messagesEndRef = useRef(null);
@@ -18,7 +20,8 @@ const ChatWindow = () => {
     typingUsers, 
     clearActiveChat,
     isMobileView,
-    receiveMessage 
+    receiveMessage ,
+    onlineUsers
   } = useChatStore();
   const {socket} = useAuthStore()
 
@@ -27,6 +30,12 @@ const ChatWindow = () => {
   const chatMessages = messages || [];
   const isTyping =
   typingUsers.get(activeChat)?.size > 0;
+  const {getUserStatus,getlastSeen} =  useUserStore()
+  const isCreator = chat ? chat.participants[0] === "current" : false;
+  console.log(chat);
+  
+   const [showMenu, setShowMenu] = useState(false);
+   const menuRef = useRef(null);
 
 
   // Auto-scroll to bottom when messages change
@@ -36,8 +45,10 @@ const ChatWindow = () => {
   useEffect(() => {
   if (socket) {
     receiveMessage();
+    
   }
 }, [socket]);
+
 
   if (!activeChat || !partner) {
     return (
@@ -83,14 +94,16 @@ const ChatWindow = () => {
           src={partner.profilePicture}
           alt={partner.username}
           size="md"
-          isOnline={partner.isOnline}
+          isOnline={getUserStatus(partner._id)}
         />
         <div className="flex-1 min-w-0">
-          <h2 className="font-medium text-foreground truncate">{partner.username}</h2>
+          <h2 className="font-medium text-foreground truncate">
+            {partner.username}
+          </h2>
           <p className="text-xs text-muted-foreground truncate">
             {isTyping ? (
               <span className="text-primary">typing...</span>
-            ) : partner.isOnline ? (
+            ) :getUserStatus(partner._id) ? (
               "online"
             ) : (
               formatLastSeen(partner.lastSeen)
@@ -99,7 +112,7 @@ const ChatWindow = () => {
         </div>
 
         {/* Action buttons */}
-        <div className="flex items-center gap-1">
+         <div className="flex items-center gap-1">
           <button
             className="p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground"
             aria-label="Video call"
@@ -112,38 +125,66 @@ const ChatWindow = () => {
           >
             <Phone className="w-5 h-5" />
           </button>
-          <button
-            className="p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground"
-            aria-label="More options"
-          >
-            <MoreVertical className="w-5 h-5" />
-          </button>
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setShowMenu((prev) => !prev)}
+              className="p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground"
+              aria-label="More options"
+            >
+              <MoreVertical className="w-5 h-5" />
+            </button>
+            {showMenu && (
+              <div className="absolute right-0 top-full mt-1 w-48 bg-card border border-border rounded-lg shadow-lg z-50 py-1">
+                <button
+                  onClick={() => {
+                    // deleteChat(activeChat);
+                    setShowMenu(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-destructive hover:bg-muted transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete Chat
+                </button>
+                {isCreator && (
+                  <button
+                    onClick={() => {
+                      // clearChat(activeChat);
+                      setShowMenu(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+                  >
+                    <Eraser className="w-4 h-4" />
+                    Clear Chat
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
       {/* Messages Area */}
       <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-2 chat-pattern scrollbar-thin">
-  {chatMessages.map((message) => (
-    <MessageBubble
-      key={message._id}
-      message={message}
-      isOwn={message.sender === "current"}
-      value={chat}
-    />
-  ))}
+        {chatMessages.map((message) => (
+          <MessageBubble
+            key={message._id}
+            message={message}
+            isOwn={message.sender === "current"}
+            value={chat}
+          />
+        ))}
 
-  {/* Typing indicator */}
-  {isTyping && (
-    <div className="flex items-center gap-2">
-      <div className="bg-bubble-incoming rounded-lg rounded-bl-sm shadow-sm">
-        <TypingIndicator />
+        {/* Typing indicator */}
+        {isTyping && (
+          <div className="flex items-center gap-2">
+            <div className="bg-bubble-incoming rounded-lg rounded-bl-sm shadow-sm">
+              <TypingIndicator />
+            </div>
+          </div>
+        )}
+
+        <div ref={messagesEndRef} />
       </div>
-    </div>
-  )}
-
-  <div ref={messagesEndRef} />
-</div>
-
 
       {/* Message Input */}
       <MessageInput />
