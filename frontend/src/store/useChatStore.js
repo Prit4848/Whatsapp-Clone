@@ -124,7 +124,9 @@ export const useChatStore = create((set, get) => ({
     // ===============================
     // USER TYPING
     // ===============================
-    socket.on("user_typing", ({ conversationId, userId, isTyping }) => {
+    socket.on("user_typing", ({ userId, conversationId, isTyping }) => {
+      console.log("typing");
+      
       set((state) => {
         const newTypingUsers = new Map(state.typingUsers);
 
@@ -143,6 +145,7 @@ export const useChatStore = create((set, get) => ({
         return { typingUsers: newTypingUsers };
       });
     });
+
 
     // ===============================
     // USER ONLINE / OFFLINE STATUS
@@ -396,24 +399,30 @@ export const useChatStore = create((set, get) => ({
   },
 
   startTyping: (receiverId) => {
-    const { socket } = useAuthStore.getState();
+    const { socket,authUser } = useAuthStore.getState();
     const { activeChat } = get();
     if (!socket || !receiverId) return;
-
+     console.log(
+      'start',receiverId
+     );
+     
     socket.emit("typing_start", {
       conversationId: activeChat,
       receiverId,
+      userId:authUser._id
     });
   },
 
   stopTyping: (receiverId) => {
-    const { socket } = useAuthStore.getState();
+    const { socket,authUser} = useAuthStore.getState();
+    const userId = authUser._id
     const { activeChat } = get();
     if (!socket || !receiverId) return;
 
     socket.emit("typing_stop", {
       conversationId: activeChat,
       receiverId,
+      userId
     });
   },
 

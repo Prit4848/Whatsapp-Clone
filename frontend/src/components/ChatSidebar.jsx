@@ -1,12 +1,18 @@
 import { useState } from "react";
-import { Search, MoreVertical, MessageCircle, User, LogOut } from "lucide-react";
-import {useChatStore} from "../store/useChatStore";
+import {
+  Search,
+  MoreVertical,
+  MessageCircle,
+  User,
+  LogOut,
+} from "lucide-react";
+import { useChatStore } from "../store/useChatStore";
 import Avatar from "./Avatar";
 import ChatItem from "./ChatItem";
 import ChatListSkeleton from "./ChatListSkeleton";
 import ThemeToggle from "./ThemeToggle";
 import { getChatPartner } from "../data/mockData";
-import {useAuthStore} from "../store/useAuthStore"
+import { useAuthStore } from "../store/useAuthStore";
 import CreateChatModal from "./CreateChatModal";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
@@ -14,10 +20,10 @@ import { useNavigate } from "react-router-dom";
 const ChatSidebar = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-   const [isCreateChatOpen, setIsCreateChatOpen] = useState(false);
-  const { chats, currentUser, isLoading,updateUserStatus } = useChatStore();
-  const {authUser,logout}=useAuthStore()
-  const navigate = useNavigate()
+  const [isCreateChatOpen, setIsCreateChatOpen] = useState(false);
+  const { chats, currentUser, isLoading, updateUserStatus } = useChatStore();
+  const { authUser, logout } = useAuthStore();
+  const navigate = useNavigate();
 
   // Filter chats based on search query
   // const filteredChats = chats.filter((chat) => {
@@ -32,29 +38,40 @@ const ChatSidebar = () => {
   //   const timeB = new Date(b.lastMessage?.timestamp || 0).getTime();
   //   return timeB - timeA;
   // });
-  const handlelogout = ()=>{
-   try {
-      logout()
-   } catch (error) {
-     const errorMessage = error.response.data.message || error.message
+  const handlelogout = () => {
+    try {
+      logout();
+    } catch (error) {
+      const errorMessage = error.response.data.message || error.message;
       toast.error(errorMessage);
-   }
-  }
+    }
+  };
+
+  const handleNavigate = async () => {
+    try {
+      navigate("/profile");
+    } catch (error) {
+      const errorMessage = error.response.data.message || error.message;
+      toast.error(errorMessage);
+    }
+  };
 
   return (
     <div className="flex flex-col h-full bg-sidebar border-r border-sidebar-border">
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 bg-card border-b border-border">
-        <Avatar
-          src={authUser.profilePicture}
-          alt={authUser.username}
-          size="md"
-        />
-        
+        <div onClick={handleNavigate}>
+          <Avatar
+            src={authUser.profilePicture}
+            alt={authUser.username}
+            size="md"
+          />
+        </div>
+
         <div className="flex items-center gap-1">
           <ThemeToggle />
           <button
-          onClick={() => setIsCreateChatOpen(true)}
+            onClick={() => setIsCreateChatOpen(true)}
             className="p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground"
             aria-label="New chat"
           >
@@ -68,18 +85,20 @@ const ChatSidebar = () => {
             >
               <MoreVertical className="w-5 h-5" />
             </button>
-            
+
             {isMenuOpen && (
               <div className="absolute right-0 top-full mt-1 w-48 bg-popover border border-border rounded-md shadow-md z-50">
                 <button
-                  onClick={()=>{navigate("/profile")}}
+                  onClick={() => {
+                    navigate("/profile");
+                  }}
                   className="w-full flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
                 >
                   <User className="w-4 h-4" />
                   Profile
                 </button>
                 <button
-                onClick={handlelogout}
+                  onClick={handlelogout}
                   className="w-full flex items-center gap-2 px-4 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
                 >
                   <LogOut className="w-4 h-4" />
@@ -110,9 +129,7 @@ const ChatSidebar = () => {
         {isLoading ? (
           <ChatListSkeleton />
         ) : chats.length > 0 ? (
-          chats.map((chat) => (
-            <ChatItem key={chat._id} chat={chat} />
-          ))
+          chats.map((chat) => <ChatItem key={chat._id} chat={chat} />)
         ) : (
           <div className="flex flex-col items-center justify-center h-full p-4 text-center">
             <MessageCircle className="w-12 h-12 text-muted-foreground mb-4" />
@@ -123,7 +140,7 @@ const ChatSidebar = () => {
           </div>
         )}
       </div>
-       {/* Create Chat Modal */}
+      {/* Create Chat Modal */}
       <CreateChatModal
         isOpen={isCreateChatOpen}
         onClose={() => setIsCreateChatOpen(false)}

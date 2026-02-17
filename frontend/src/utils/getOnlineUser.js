@@ -1,6 +1,6 @@
 import {useChatStore} from '../store/useChatStore'
 
-const {onlineUsers} = useChatStore.getState()
+const {onlineUsers,typingUsers} = useChatStore.getState()
 
 export const getUserStatus = (id)=>{
     return onlineUsers.get(id)?.isOnline || false
@@ -9,4 +9,4 @@ export const getUserStatus = (id)=>{
 export const getlastSeen = (id)=>{
     return onlineUsers.get(id)?.lastSeen || null
   }
-  
+

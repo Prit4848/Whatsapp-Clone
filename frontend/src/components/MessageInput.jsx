@@ -1,12 +1,15 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Send, Paperclip, Smile, Mic } from "lucide-react";
 import { useChatStore } from "../store/useChatStore";
 import toast from "react-hot-toast";
 
 const MessageInput = ({chat}) => {
   const [message, setMessage] = useState("");
-  const { sendMessage } = useChatStore()
+  const { sendMessage,startTyping,stopTyping} = useChatStore()
+  const isTypingtimeoutRef = useRef()
+  const receiver = chat.participants.filter((c)=> c!== "current")
 
+  
   const handleSubmit = (e) => {
     e.preventDefault();
     // UI only - no functionality
@@ -20,6 +23,22 @@ const MessageInput = ({chat}) => {
       setMessage('')
     }
   };
+
+  const handlestartTyping = (value)=>{
+    setMessage(value)
+    if(value.trim){
+      startTyping(receiver[0]._id)
+
+       if(isTypingtimeoutRef.current){
+        clearTimeout(isTypingtimeoutRef.current);
+       }
+      isTypingtimeoutRef.current = setTimeout(()=>{
+       stopTyping(receiver[0]._id)
+      },3000)
+    }else{
+      stopTyping(receiver[0]._id)
+    }
+  }
 
   return (
     <form
@@ -49,7 +68,7 @@ const MessageInput = ({chat}) => {
         <input
           type="text"
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={(e) => handlestartTyping(e.target.value)}
           placeholder="Type a message"
           className="w-full px-4 py-2.5 bg-muted rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground"
         />

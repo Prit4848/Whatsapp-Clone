@@ -1,54 +1,56 @@
 import { useEffect, useRef } from "react";
-import { ArrowLeft, MoreVertical, Phone, Video, Trash2,Eraser} from "lucide-react";
-import {useChatStore} from "../store/useChatStore";
+import {
+  ArrowLeft,
+  MoreVertical,
+  Phone,
+  Video,
+  Trash2,
+  Eraser,
+} from "lucide-react";
+import { useChatStore } from "../store/useChatStore";
 import { useAuthStore } from "../store/useAuthStore";
 import Avatar from "./Avatar";
 import MessageBubble from "./MessageBubble";
 import MessageInput from "./MessageInput";
 import TypingIndicator from "./TypingIndicator";
 import { formatLastSeen } from "../utils/helpers";
-import { getChatPartner } from "../data/mockData";
-import {useUserStore} from "../store/useUserStore"
+import { useUserStore } from "../store/useUserStore";
 import { useState } from "react";
+import { PhotoProvider, PhotoView } from "react-photo-view";
+import "react-photo-view/dist/react-photo-view.css";
 
 const ChatWindow = () => {
   const messagesEndRef = useRef(null);
-  const { 
-    activeChat, 
-    chats, 
-    messages, 
-    typingUsers, 
+  const {
+    activeChat,
+    chats,
+    messages,
+    typingUsers,
     clearActiveChat,
     isMobileView,
-    receiveMessage ,
-    onlineUsers
+    receiveMessage,
   } = useChatStore();
-  const {socket} = useAuthStore()
+  const { socket } = useAuthStore();
 
   const chat = chats.find((c) => c._id === activeChat);
-  const partner = chat?.participants?.find((p)=> p != "current") || [];;
+  const partner = chat?.participants?.find((p) => p != "current") || [];
   const chatMessages = messages || [];
-  const isTyping =
-  typingUsers.get(activeChat)?.size > 0;
-  const {getUserStatus,getlastSeen} =  useUserStore()
+  const isTyping = typingUsers.get(activeChat)?.size > 0;
+  const { getUserStatus, } = useUserStore();
   const isCreator = chat ? chat.participants[0] === "current" : false;
-  console.log(chat);
-  
-   const [showMenu, setShowMenu] = useState(false);
-   const menuRef = useRef(null);
-
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef(null);
+  const [showProfilePic, setShowProfilePic] = useState(false);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages, isTyping]);
   useEffect(() => {
-  if (socket) {
-    receiveMessage();
-    
-  }
-}, [socket]);
-
+    if (socket) {
+      receiveMessage();
+    }
+  }, [socket]);
 
   if (!activeChat || !partner) {
     return (
@@ -90,12 +92,17 @@ const ChatWindow = () => {
         )}
 
         {/* User info */}
-        <Avatar
-          src={partner.profilePicture}
-          alt={partner.username}
-          size="md"
-          isOnline={getUserStatus(partner._id)}
-        />
+        <button
+          onClick={() => setShowProfilePic(true)}
+          className="focus:outline-none"
+        >
+          <Avatar
+            src={partner.profilePicture}
+            alt={partner.username}
+            size="md"
+            isOnline={getUserStatus(partner._id)}
+          />
+        </button>
         <div className="flex-1 min-w-0">
           <h2 className="font-medium text-foreground truncate">
             {partner.username}
@@ -103,7 +110,7 @@ const ChatWindow = () => {
           <p className="text-xs text-muted-foreground truncate">
             {isTyping ? (
               <span className="text-primary">typing...</span>
-            ) :getUserStatus(partner._id) ? (
+            ) : getUserStatus(partner._id) ? (
               "online"
             ) : (
               formatLastSeen(partner.lastSeen)
@@ -112,7 +119,7 @@ const ChatWindow = () => {
         </div>
 
         {/* Action buttons */}
-         <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1">
           <button
             className="p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground"
             aria-label="Video call"
@@ -187,7 +194,59 @@ const ChatWindow = () => {
       </div>
 
       {/* Message Input */}
-      <MessageInput />
+      <MessageInput chat={chat} />
+
+      {showProfilePic && (
+        <PhotoProvider
+          visible={showProfilePic}
+          onClose={() => setShowProfilePic(false)}
+          maskOpacity={1}
+          speed={() => 300}
+          overlayRender={() => (
+            <div className="absolute top-0 left-0 w-full z-50 flex items-center justify-between p-2 bg-gradient-to-b from-black/70 via-black/40 to-transparent">
+              <div className="flex items-center gap-2">
+                {/* Back Button - Essential for WhatsApp feel */}
+                <button
+                  onClick={() => setShowProfilePic(false)}
+                  className="p-2 text-white hover:bg-white/10 rounded-full transition-colors active:scale-90"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="m15 18-6-6 6-6" />
+                  </svg>
+                </button>
+
+                <div className="flex flex-col">
+                  <span className="text-white text-[17px] font-medium leading-tight">
+                    {partner.username}
+                  </span>
+                  <span className="text-white/60 text-xs">
+                    {new Date().toLocaleDateString()}{" "}
+                    {/* Mimics the "date updated" feel */}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        >
+          <PhotoView src={partner.profilePicture}>
+            <img
+              src={partner.profilePicture}
+              alt={partner.username}
+              className="hidden" // Keeping it hidden so only the full-screen view shows
+            />
+          </PhotoView>
+        </PhotoProvider>
+      )}
     </div>
   );
 };

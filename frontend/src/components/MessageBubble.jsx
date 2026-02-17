@@ -13,7 +13,7 @@ const MessageBubble = ({ message, isOwn }) => {
   const menuRef = useRef(null);
   const bubbleRef = useRef(null);
   const {socket} = useAuthStore()
-  const {markMessageRead ,setunreadCountZero} = useChatStore()
+  const {markMessageRead ,setunreadCountZero,deleteMessage} = useChatStore()
  
 
   const isImage = message.contentType === "image";
@@ -90,6 +90,14 @@ const MessageBubble = ({ message, isOwn }) => {
       handleCancelEdit();
     }
   };
+
+  const hadleDeleteMessage = (messageId)=>{
+     try {
+      deleteMessage(messageId)
+     }finally{
+      setIsMenuOpen(false)
+     }
+  }
 
   return (
     <div
@@ -221,7 +229,7 @@ const MessageBubble = ({ message, isOwn }) => {
                   )}
                   {/* Delete option - for all messages */}
                   <button
-                    onClick={() => setIsMenuOpen(false)}
+                    onClick={() => hadleDeleteMessage(message._id)}
                     className="flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 rounded-md transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />

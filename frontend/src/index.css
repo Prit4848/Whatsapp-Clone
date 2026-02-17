@@ -316,9 +316,8 @@ body {
 }
 
 .animate-message-in {
-  animation: message-in 0.2s ease-out;
+  animation: message-in 0.1s cubic-bezier(0.22, 1, 0.36, 1);
 }
-
 /* Typing indicator animation */
 @keyframes typing-dot {
   0%,
