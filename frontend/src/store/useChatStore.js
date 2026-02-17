@@ -104,9 +104,9 @@ export const useChatStore = create((set, get) => ({
     // ===============================
     // MESSAGE DELETED
     // ===============================
-    socket.on("message_deleted", ({ deletedMessageId }) => {
+    socket.on("message_deleted", ({ messageId }) => {
       set((state) => ({
-        messages: state.messages.filter((msg) => msg._id !== deletedMessageId),
+        messages: state.messages.filter((msg) => msg._id !== messageId),
       }));
     });
 
@@ -126,7 +126,7 @@ export const useChatStore = create((set, get) => ({
     // ===============================
     socket.on("user_typing", ({ userId, conversationId, isTyping }) => {
       console.log("typing");
-      
+
       set((state) => {
         const newTypingUsers = new Map(state.typingUsers);
 
@@ -146,7 +146,6 @@ export const useChatStore = create((set, get) => ({
       });
     });
 
-
     // ===============================
     // USER ONLINE / OFFLINE STATUS
     // ===============================
@@ -156,6 +155,14 @@ export const useChatStore = create((set, get) => ({
         newOnlineUsers.set(userId, { isOnline, lastSeen });
         return { onlineUsers: newOnlineUsers };
       });
+    });
+
+    socket.on("message_update", ({ messageId, content }) => {
+      set((state) => ({
+        messages: state.messages.map((msg) =>
+          msg._id === messageId ? { ...msg, content } : msg,
+        ),
+      }));
     });
   },
 
@@ -224,7 +231,7 @@ export const useChatStore = create((set, get) => ({
         createdAt: createdConversationresponse.lastMessage.createdAt,
         updatedAt: createdConversationresponse.lastMessage.createdAt,
       };
-       
+
       set((state) => ({
         chats: [...state.chats, createdConversation],
       }));
@@ -234,7 +241,7 @@ export const useChatStore = create((set, get) => ({
         error.response.data.messages ||
         error.messages ||
         "Something Went Wrong Please Try Again ";
-      toast.error(`${errorMessage}`)
+      toast.error(`${errorMessage}`);
     } finally {
       set({ isCreateChat: false });
     }
@@ -386,6 +393,18 @@ export const useChatStore = create((set, get) => ({
       toast.error(error?.response?.data?.message || error.message);
     }
   },
+  updateMessage:async(messageId,content)=>{
+    try {
+      await axiosInstance.put(`/message/${messageId}`,{content})
+
+      set((state)=>({
+        messages:state.messages.map((msg)=> msg._id === messageId?{...msg,content}:msg)
+      }))
+    } catch (error) {
+      const errorMessage = error.response.data.message || error.message
+      toast.error(errorMessage)
+    }
+  },
   editMessage: () => {},
   addReactions: (messageId, emoji) => {
     const { socket, authUser } = useAuthStore.getState();
@@ -399,30 +418,28 @@ export const useChatStore = create((set, get) => ({
   },
 
   startTyping: (receiverId) => {
-    const { socket,authUser } = useAuthStore.getState();
+    const { socket, authUser } = useAuthStore.getState();
     const { activeChat } = get();
     if (!socket || !receiverId) return;
-     console.log(
-      'start',receiverId
-     );
-     
+    console.log("start", receiverId);
+
     socket.emit("typing_start", {
       conversationId: activeChat,
       receiverId,
-      userId:authUser._id
+      userId: authUser._id,
     });
   },
 
   stopTyping: (receiverId) => {
-    const { socket,authUser} = useAuthStore.getState();
-    const userId = authUser._id
+    const { socket, authUser } = useAuthStore.getState();
+    const userId = authUser._id;
     const { activeChat } = get();
     if (!socket || !receiverId) return;
 
     socket.emit("typing_stop", {
       conversationId: activeChat,
       receiverId,
-      userId
+      userId,
     });
   },
 
@@ -466,21 +483,21 @@ export const useChatStore = create((set, get) => ({
       };
     });
   },
-  updateUserStatus:(userId)=>{
-   const {socket} = useAuthStore.getState()
-   if(!userId && !socket) return;
-   socket.emit("get_user_status",userId,(response)=>{
-     set((state)=>{
-      const updateMap = new Map(state.onlineUsers)
-      updateMap.set(response.userId,{
-        isOnline:response.isOnline,
-        lastSeen:response.lastSeen
-      })
-      return {
-        onlineUsers:updateMap
-      }
-     })
-   })
+  updateUserStatus: (userId) => {
+    const { socket } = useAuthStore.getState();
+    if (!userId && !socket) return;
+    socket.emit("get_user_status", userId, (response) => {
+      set((state) => {
+        const updateMap = new Map(state.onlineUsers);
+        updateMap.set(response.userId, {
+          isOnline: response.isOnline,
+          lastSeen: response.lastSeen,
+        });
+        return {
+          onlineUsers: updateMap,
+        };
+      });
+    });
   },
   cleanup: () => {
     const { socket } = useAuthStore.getState();

@@ -13,7 +13,7 @@ const MessageBubble = ({ message, isOwn }) => {
   const menuRef = useRef(null);
   const bubbleRef = useRef(null);
   const {socket} = useAuthStore()
-  const {markMessageRead ,setunreadCountZero,deleteMessage} = useChatStore()
+  const {markMessageRead ,setunreadCountZero,deleteMessage,updateMessage} = useChatStore()
  
 
   const isImage = message.contentType === "image";
@@ -73,8 +73,9 @@ const MessageBubble = ({ message, isOwn }) => {
     setIsMenuOpen(false);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     setIsEditing(false);
+    await updateMessage(message._id,editText)
   };
 
   const handleCancelEdit = () => {

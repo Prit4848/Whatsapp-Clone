@@ -60,7 +60,7 @@ export const deleteChat = asyncHandler(async (req,res)=>{
     const conversation = await Conversation.findOne({_id:conversationId})
 
     if(!conversation){
-        return response(res,404,"Conversation Not Foud")
+        return response(res,404,"Conversation Not Found")
     }
 
     if(!conversation.participants.includes(userId)){
@@ -73,6 +73,32 @@ export const deleteChat = asyncHandler(async (req,res)=>{
 
     await Conversation.deleteOne({_id:conversationId})
 
+
+
     return response(res,200,"Conversation Deleted Successfully")
+})
+
+export const clearChat = asyncHandler(async (req,res)=>{
+  const userId = req.user._id;
+  const {conversationId} = req.body;
+
+  if(!conversationId){
+    return response(res,400,"conversation Id is Require")
+  }
+
+  const conversation = await Conversation.findOne({_id:conversationId})
+
+  if(!conversation){
+    return response(res,400,"conversation Not Found")
+  }
+   if(!conversation.participants.includes(userId)){
+        return response(res,403,"You are not Allow to delete the message")
+    }
+
+ await Message.deleteMany({
+      conversation:conversationId,
+    });
+
+ return response(res,200,"Clear Hour Succesfully")
 })
 

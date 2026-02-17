@@ -41,11 +41,26 @@ const ChatWindow = () => {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
   const [showProfilePic, setShowProfilePic] = useState(false);
+  const messagesContainerRef = useRef(null);
 
   // Auto-scroll to bottom when messages change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatMessages, isTyping]);
+  // 1️⃣ When chat opens → scroll instantly
+useEffect(() => {
+  messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+}, [activeChat]);
+
+// 2️⃣ When new message comes → smooth scroll
+useEffect(() => {
+  messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+}, [chatMessages.length, isTyping]);
+
+useEffect(() => {
+  if (messagesContainerRef.current) {
+    messagesContainerRef.current.scrollTop =
+      messagesContainerRef.current.scrollHeight;
+  }
+}, [activeChat]);
+
   useEffect(() => {
     if (socket) {
       receiveMessage();
@@ -171,7 +186,7 @@ const ChatWindow = () => {
       </header>
 
       {/* Messages Area */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-2 chat-pattern scrollbar-thin">
+      <div  ref={messagesContainerRef} className="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-2 chat-pattern scrollbar-thin">
         {chatMessages.map((message) => (
           <MessageBubble
             key={message._id}

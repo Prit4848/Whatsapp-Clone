@@ -316,8 +316,20 @@ body {
 }
 
 .animate-message-in {
-  animation: message-in 0.1s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: message-in 0.3s ease;
 }
+
+@keyframes message-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Typing indicator animation */
 @keyframes typing-dot {
   0%,

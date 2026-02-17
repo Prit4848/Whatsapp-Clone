@@ -151,15 +151,59 @@ export const deleteMessage = asyncHandler(async (req, res) => {
     return response(res, 404, "you dont have delete the message");
   }
 
-  if (message.sender.toString() !== userId.toString()) {
-    return response(res, 400, "Not Authorized to delete the message");
-  }
-
-  await message.deleteOne();
-  if (req.io && req.soketUserMap) {
-    const receiversocketId = req.soketUserMap.get(message.receiver.toString());
-    req.io.to(receiversocketId).emit("message_deleted", messageId);
+  // if (message.sender.toString() !== userId.toString()) {
+  //   return response(res, 400, "Not Authorized to delete the message");
+  // }
+   let id
+   if(userId.toString() === message.receiver.toString()){
+     id = message.sender.toString()
+   }else if(userId.toString() === message.sender.toString()){
+    id = message.receiver.toString()
+   }
+   
+   await message.deleteOne();
+   console.log(req.socketUserMap);
+   
+   console.log(id);
+  if (req.io && req.socketUserMap) {
+    const receiversocketId = req.socketUserMap.get(id);
+    console.log(receiversocketId);
+    
+    req.io.to(receiversocketId).emit("message_deleted", {messageId});
   }
 
   return response(res, 200, "delete message successfully");
 });
+
+export const editMessage = asyncHandler(async (req,res)=>{
+  const userId = req.user._id;
+  const {messageId} = req.params
+  const {content} = req.body;
+
+  if(!messageId){
+    return response(res,400,"MessageId Is Require!")
+  }
+
+  const message = await Message.findOne({_id:messageId})
+
+  if(!message){
+    return response(res,404,"Message Not Found")
+  }
+
+  if(userId.toString() !== message.sender.toString()){
+   return response(res, 400, "Not Authorized to delete the message");
+  }
+
+  message.content = content;
+
+  await message.save()
+   console.log(req.socketUserMap);
+   
+  if(req.io && req.socketUserMap){
+    const socketReceiverId = req.socketUserMap.get(message.receiver.toString())
+
+    req.io.to(socketReceiverId).emit("message_update",{messageId,content})
+  }
+
+  return response(res,200,"Message Update Successfully")
+})
