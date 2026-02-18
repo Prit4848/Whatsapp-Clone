@@ -1,10 +1,7 @@
 import { create } from "zustand";
 import {
-  chats,
-  messages,
   users,
   currentUser,
-  getUserById,
 } from "../data/mockData";
 import axiosInstance from "../services/axiosInstance";
 import { useAuthStore } from "../store/useAuthStore";
@@ -164,6 +161,43 @@ export const useChatStore = create((set, get) => ({
         ),
       }));
     });
+
+    socket.on("clear_chat", ({ chatId }) => {
+      set((state)=>({
+        messages:state.messages.filter((msg)=> msg.conversation !== chatId)
+      }))
+    });
+
+    socket.on("delete_chat",({chatId})=>{
+      set((state)=>({
+        chats:state.chats.filter((chat)=> chat._id !== chatId)
+      }))
+      setTimeout(()=>{window.location.reload()},500)
+    })
+
+    socket.on("create_chat", ({ conversation }) => {
+  console.log("Received conversation:",conversation);
+
+  const createdConversation = {
+    _id: conversation._id,
+    participants: conversation.participants.map((i) =>
+      i === currentUser._id ? "current" : i
+    ),
+    lastMessage: {
+      content: conversation.lastMessage?.content || null,
+      createdAt: conversation.lastMessage?.createdAt || null,
+      sender: conversation.lastMessage?.sender || null,
+      messageStatus: conversation.lastMessage?.messageStatus || null,
+    },
+    createdAt: conversation.lastMessage?.createdAt || new Date(),
+    updatedAt: conversation.lastMessage?.createdAt || new Date(),
+  };
+
+  set((state) => ({
+    chats: [...state.chats, createdConversation],
+  }));
+});
+
   },
 
   setAllChats: async () => {
@@ -277,16 +311,20 @@ export const useChatStore = create((set, get) => ({
     }
   },
 
-  setActiveChat: (chatId) => {
-    set({
-      activeChat: chatId,
-      showChatList: !get().isMobileView,
-    });
-  },
+setActiveChat: (chatId) => {
+  set({
+    activeChat: chatId,
+    showChatList: false,  // always hide sidebar on mobile
+  });
+},
 
-  clearActiveChat: () => {
-    set({ activeChat: null, showChatList: true });
-  },
+clearActiveChat: () => {
+  set({
+    activeChat: null,
+    showChatList: true,
+  });
+},
+
 
   sendMessage: async (message) => {
     try {
@@ -359,7 +397,7 @@ export const useChatStore = create((set, get) => ({
   },
 
   markMessageRead: async (messageId) => {
-    const { socket, authUser } = useAuthStore.getState();
+    const { socket } = useAuthStore.getState();
 
     try {
       await axiosInstance.put("/message/read", {
@@ -498,6 +536,31 @@ export const useChatStore = create((set, get) => ({
         };
       });
     });
+  },
+  deleteChat:async()=>{
+    try {
+      const {activeChat} = get()
+      await axiosInstance.delete(`/conversation/${activeChat}`)
+      set((state)=>({
+        chats:state.chats.filter((chat)=> chat._id !== activeChat),
+        messages:[],
+        activeChat:null
+      }))
+      setTimeout(()=>{window.location.reload()},500)
+    } catch (error) {
+      const errorMessage = error.response.data.message || error.message;
+      toast.error(errorMessage)
+    }
+  },
+  clearChat:async()=>{
+    try {
+      const {activeChat} = get()
+      await axiosInstance.delete(`/conversation/${activeChat}/clear-chat`)
+      set((state)=>({messages:state.messages.filter((msg)=> msg.conversation !== activeChat)}))
+    } catch (error) {
+      const errorMessage = error.response.data.message || error.message;
+      toast.error(errorMessage)
+    }
   },
   cleanup: () => {
     const { socket } = useAuthStore.getState();

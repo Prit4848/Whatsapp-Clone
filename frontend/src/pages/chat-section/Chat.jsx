@@ -18,32 +18,33 @@ const Chat = () => {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
-      {/* Sidebar - hidden on mobile when viewing chat */}
-      <div
-        className={`${
-          isMobileView
-            ? activeChat
-              ? "hidden"
-              : "w-full"
-            : "w-[350px] lg:w-[400px] flex-shrink-0"
-        } h-full`}
-      >
-        <ChatSidebar />
-      </div>
+  
+  {/* Sidebar */}
+  <div
+    className={`
+      ${isMobileView 
+        ? activeChat ? "hidden" : "w-full" 
+        : "w-[350px] lg:w-[400px]"}
+      h-full flex-shrink-0
+    `}
+  >
+    <ChatSidebar />
+  </div>
 
-      {/* Chat Window - hidden on mobile when viewing chat list */}
-      <div
-        className={`${
-          isMobileView
-            ? activeChat
-              ? "w-full"
-              : "hidden"
-            : "flex-1"
-        } h-full`}
-      >
-        <ChatWindow />
-      </div>
-    </div>
+  {/* Chat Window */}
+  <div
+    className={`
+      ${isMobileView 
+        ? activeChat ? "w-full" : "hidden"
+        : "flex-1"}
+      h-full
+    `}
+  >
+    <ChatWindow />
+  </div>
+
+</div>
+
   );
 };
 

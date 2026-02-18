@@ -12,60 +12,45 @@ const MessageBubble = ({ message, isOwn }) => {
   const [editText, setEditText] = useState(message.content);
   const menuRef = useRef(null);
   const bubbleRef = useRef(null);
-  const {socket} = useAuthStore()
-  const {markMessageRead ,setunreadCountZero,deleteMessage,updateMessage} = useChatStore()
- 
+  const { socket } = useAuthStore();
+  const { markMessageRead, setunreadCountZero, deleteMessage, updateMessage } = useChatStore();
 
   const isImage = message.contentType === "image";
   const isVideo = message.contentType === "video";
   const isText = message.contentType === "text";
 
-
   useEffect(() => {
-  if (!bubbleRef.current) return;
-  if (isOwn) return; // Only mark incoming messages as read
-  if (message.messageStatus === "read") return;
+    if (!bubbleRef.current) return;
+    if (isOwn) return;
+    if (message.messageStatus === "read") return;
 
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          markMessageRead(message._id);
-        }
-      });
-    },
-    { threshold: 0.6 } // 60% visible
-  );
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) markMessageRead(message._id);
+        });
+      },
+      { threshold: 0.6 }
+    );
 
-  observer.observe(bubbleRef.current);
+    observer.observe(bubbleRef.current);
+    return () => {
+      if (bubbleRef.current) observer.unobserve(bubbleRef.current);
+    };
+  }, [message._id, message.messageStatus]);
 
-  return () => {
-    if (bubbleRef.current) {
-      observer.unobserve(bubbleRef.current);
-    }
-  };
-}, [message._id, message.messageStatus]);
-
-  // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
+      if (menuRef.current && !menuRef.current.contains(event.target))
         setIsMenuOpen(false);
-      }
     };
-
-    if (isMenuOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
+    if (isMenuOpen) document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isMenuOpen]);
 
   useEffect(() => {
-    if(socket){
-      setunreadCountZero()
-    }
-  }, [socket])
-  
+    if (socket) setunreadCountZero();
+  }, [socket]);
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -75,7 +60,7 @@ const MessageBubble = ({ message, isOwn }) => {
 
   const handleSaveEdit = async () => {
     setIsEditing(false);
-    await updateMessage(message._id,editText)
+    await updateMessage(message._id, editText);
   };
 
   const handleCancelEdit = () => {
@@ -92,32 +77,80 @@ const MessageBubble = ({ message, isOwn }) => {
     }
   };
 
-  const hadleDeleteMessage = (messageId)=>{
-     try {
-      deleteMessage(messageId)
-     }finally{
-      setIsMenuOpen(false)
-     }
-  }
+  const hadleDeleteMessage = (messageId) => {
+    try {
+      deleteMessage(messageId);
+    } finally {
+      setIsMenuOpen(false);
+    }
+  };
 
   return (
     <div
-        ref={bubbleRef}
-      className={`flex ${isOwn ? "justify-end" : "justify-start"} animate-message-in`}
+      ref={bubbleRef}
+      className={`flex ${isOwn ? "justify-end" : "justify-start"} animate-message-in group px-1`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => !isMenuOpen && setIsHovered(false)}
     >
       <div
-        className={`relative flex items-start gap-1 w-full min-w-0 ${
+        className={`relative flex items-end gap-1.5 max-w-[78%] md:max-w-[62%] min-w-0 ${
           isOwn ? "flex-row-reverse" : "flex-row"
         }`}
       >
+        {/* 3-dot menu — sits outside bubble, vertically aligned to bottom */}
+        <div
+          className={`flex-shrink-0 transition-opacity duration-150 ${
+            isHovered || isMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
+          ref={menuRef}
+        >
+          {!isEditing && (
+            <div className="relative">
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-muted/70 transition-colors"
+                aria-label="Message options"
+              >
+                <MoreVertical className="w-3.5 h-3.5 text-muted-foreground" />
+              </button>
+
+              {isMenuOpen && (
+                <div
+                  className={`absolute bottom-full mb-1.5 ${
+                    isOwn ? "right-0" : "left-0"
+                  } w-44 bg-popover border border-border/60 rounded-xl shadow-lg z-50 overflow-hidden`}
+                >
+                  {isOwn && isText && (
+                    <button
+                      onClick={handleEdit}
+                      className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[13px] text-foreground hover:bg-muted/60 transition-colors"
+                    >
+                      <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                      Edit message
+                    </button>
+                  )}
+                  {(isOwn && isText) && (
+                    <div className="mx-3 h-px bg-border/50" />
+                  )}
+                  <button
+                    onClick={() => hadleDeleteMessage(message._id)}
+                    className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[13px] text-destructive hover:bg-destructive/8 transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Delete message
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Message bubble */}
         <div
-          className={`min-w-0 max-w-[75%] md:max-w-[60%] break-words rounded-lg px-3 py-2 shadow-sm ${
+          className={`min-w-0 break-words rounded-2xl px-3.5 py-2 shadow-sm ${
             isOwn
-              ? "bg-bubble-outgoing text-bubble-outgoing-foreground rounded-br-sm"
-              : "bg-bubble-incoming text-bubble-incoming-foreground rounded-bl-sm"
+              ? "bg-bubble-outgoing text-bubble-outgoing-foreground rounded-br-[4px]"
+              : "bg-bubble-incoming text-bubble-incoming-foreground rounded-bl-[4px]"
           }`}
         >
           {/* Image message */}
@@ -126,11 +159,11 @@ const MessageBubble = ({ message, isOwn }) => {
               <img
                 src={message.imageOrVideoUrl}
                 alt="Shared image"
-                className="rounded-md max-w-full h-auto"
+                className="rounded-xl max-w-full h-auto"
                 loading="lazy"
               />
               {message.content && (
-                <p className="mt-2 text-sm">{message.content}</p>
+                <p className="mt-2 text-sm leading-relaxed">{message.content}</p>
               )}
             </div>
           )}
@@ -141,106 +174,66 @@ const MessageBubble = ({ message, isOwn }) => {
               <video
                 src={message.imageOrVideoUrl}
                 controls
-                className="rounded-md max-w-full h-auto"
+                className="rounded-xl max-w-full h-auto"
               />
               {message.content && (
-                <p className="mt-2 text-sm">{message.content}</p>
+                <p className="mt-2 text-sm leading-relaxed">{message.content}</p>
               )}
             </div>
           )}
 
-          {/* Text message - with editing support */}
+          {/* Text message */}
           {isText &&
             (isEditing ? (
-              <div className="min-w-[200px]">
+              <div className="min-w-[220px]">
                 <textarea
                   value={editText}
                   onChange={(e) => setEditText(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className="w-full p-2 text-sm rounded-md border border-border bg-background text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-border bg-background text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/25 transition-shadow"
                   rows={2}
                   autoFocus
                 />
                 <div className="flex gap-2 mt-2">
                   <button
                     onClick={handleSaveEdit}
-                    className="px-3 py-1 text-xs bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                    className="px-3.5 py-1.5 text-[12px] font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
                   >
                     Save
                   </button>
                   <button
                     onClick={handleCancelEdit}
-                    className="px-3 py-1 text-xs bg-muted text-muted-foreground rounded-md hover:bg-muted/80 transition-colors"
+                    className="px-3.5 py-1.5 text-[12px] font-medium bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors"
                   >
                     Cancel
                   </button>
                 </div>
               </div>
             ) : (
-              <p className="text-sm whitespace-pre-wrap break-words">
+              <p className="text-[13.5px] leading-relaxed whitespace-pre-wrap break-words">
                 {message.content}
                 {message.isEdited && (
-                  <span className="text-[10px] text-muted-foreground ml-1">
-                    (edited)
+                  <span className="text-[10px] text-muted-foreground/70 ml-1.5 italic">
+                    edited
                   </span>
                 )}
               </p>
             ))}
 
-          {/* Time and status */}
+          {/* Time + status row */}
           {!isEditing && (
             <div
-              className={`flex items-center gap-1 mt-1 ${
+              className={`flex items-center gap-1 mt-0.5 ${
                 isOwn ? "justify-end" : "justify-start"
               }`}
             >
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-[10px] text-muted-foreground/70 select-none">
                 {formatMessageTime(message.createdAt)}
               </span>
               {isOwn && <MessageStatus status={message.messageStatus} />}
             </div>
           )}
         </div>
-
-        {/* 3-dot menu */}
-        {(isHovered || isMenuOpen) && !isEditing && (
-          <div className="relative" ref={menuRef}>
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-1 rounded-full hover:bg-muted/50 transition-colors flex-shrink-0"
-              aria-label="Message options"
-            >
-              <MoreVertical className="w-4 h-4 text-muted-foreground" />
-            </button>
-
-            {isMenuOpen && (
-              <div
-                className={`relative bottom-full mb-1 ${isOwn ? "right-0" : "left-0"} w-40 p-1 bg-popover border border-border rounded-md shadow-md z-50`}
-              >
-                <div className="flex flex-col">
-                  {/* Edit option - only for own text messages */}
-                  {isOwn && isText && (
-                    <button
-                      onClick={handleEdit}
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted rounded-md transition-colors"
-                    >
-                      <Pencil className="w-4 h-4" />
-                      Edit message
-                    </button>
-                  )}
-                  {/* Delete option - for all messages */}
-                  <button
-                    onClick={() => hadleDeleteMessage(message._id)}
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 rounded-md transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Delete message
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );

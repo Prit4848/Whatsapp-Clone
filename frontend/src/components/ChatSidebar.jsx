@@ -25,19 +25,6 @@ const ChatSidebar = () => {
   const { authUser, logout } = useAuthStore();
   const navigate = useNavigate();
 
-  // Filter chats based on search query
-  // const filteredChats = chats.filter((chat) => {
-  //   if (!searchQuery) return true;
-  //   const partner = getChatPartner(chat);
-  //   return partner?.name.toLowerCase().includes(searchQuery.toLowerCase());
-  // });
-
-  // Sort chats by last message timestamp (most recent first)
-  // const sortedChats = [...filteredChats].sort((a, b) => {
-  //   const timeA = new Date(a.lastMessage?.timestamp || 0).getTime();
-  //   const timeB = new Date(b.lastMessage?.timestamp || 0).getTime();
-  //   return timeB - timeA;
-  // });
   const handlelogout = () => {
     try {
       logout();

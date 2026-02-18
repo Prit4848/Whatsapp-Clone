@@ -109,79 +109,79 @@
   }
 }
 
-/* ===== LIGHT MODE (WhatsApp Web inspired) ===== */
+/* ===== IMPROVED LIGHT MODE (Clean WhatsApp Web Style) ===== */
 :root {
-  /* App backgrounds */
-  --background: 210 17% 95%; /* #F0F2F5 */
-  --foreground: 200 32% 10%; /* #111B21 */
+  /* App background - softer neutral */
+  --background: 210 20% 96%; /* #F3F5F7 */
+  --foreground: 210 25% 12%; /* darker text */
 
-  /* Card/Sidebar - pure white */
-  --card: 0 0% 100%; /* #FFFFFF */
-  --card-foreground: 200 32% 10%; /* #111B21 */
+  /* Cards / Sidebar - pure white */
+  --card: 0 0% 100%;
+  --card-foreground: 210 25% 12%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 200 32% 10%;
+  --popover-foreground: 210 25% 12%;
 
-  /* WhatsApp Brand Green - #25D366 */
-  --primary: 142 70% 49%;
+  /* WhatsApp Green */
+  --primary: 142 72% 45%; /* slightly deeper */
   --primary-foreground: 0 0% 100%;
-  --primary-hover: 142 72% 43%; /* #1EBE5D */
-  --primary-soft: 93 75% 87%; /* #DCF8C6 */
+  --primary-hover: 142 72% 40%;
+  --primary-soft: 93 80% 88%;
 
-  --secondary: 200 15% 93%; /* #E9EDEF */
-  --secondary-foreground: 200 32% 10%;
+  --secondary: 210 18% 92%; /* cleaner grey */
+  --secondary-foreground: 210 25% 12%;
 
   /* Text hierarchy */
-  --muted: 200 15% 93%; /* #E9EDEF */
-  --muted-foreground: 200 12% 58%; /* #8696A0 */
+  --muted: 210 18% 92%;
+  --muted-foreground: 210 10% 45%; /* better contrast */
 
-  --accent: 142 70% 49%;
+  --accent: 142 72% 45%;
   --accent-foreground: 0 0% 100%;
 
-  /* Status colors */
-  --destructive: 347 100% 46%; /* #EA0038 */
+  /* Status */
+  --destructive: 0 75% 55%;
   --destructive-foreground: 0 0% 100%;
 
-  /* Borders */
-  --border: 200 15% 93%; /* #E9EDEF */
-  --input: 0 0% 100%; /* #FFFFFF */
-  --ring: 142 70% 49%;
+  /* Borders - more visible */
+  --border: 210 18% 88%; /* darker than before */
+  --input: 0 0% 100%;
+  --ring: 142 72% 45%;
 
-  --radius: 0.5rem;
+  --radius: 0.6rem;
 
-  /* Chat area - WhatsApp beige pattern */
-  --chat-bg: 30 22% 87%; /* #E5DDD5 */
-  --chat-pattern: 30 22% 82%;
+  /* Chat area - lighter WhatsApp tone */
+  --chat-bg: 32 30% 90%; /* softer beige */
+  --chat-pattern: 32 25% 85%;
 
   /* Message bubbles */
-  --bubble-outgoing: 93 75% 87%; /* #DCF8C6 - sent */
-  --bubble-incoming: 0 0% 100%; /* #FFFFFF - received */
-  --bubble-outgoing-foreground: 200 32% 10%;
-  --bubble-incoming-foreground: 200 32% 10%;
+  --bubble-outgoing: 95 75% 88%; /* brighter green */
+  --bubble-incoming: 0 0% 100%;
+  --bubble-outgoing-foreground: 210 25% 12%;
+  --bubble-incoming-foreground: 210 25% 12%;
 
   /* Status indicators */
-  --status-online: 142 70% 49%; /* #25D366 */
-  --status-warning: 42 88% 55%; /* #F0B429 */
-  --status-error: 347 100% 46%; /* #EA0038 */
+  --status-online: 142 72% 45%;
+  --status-warning: 42 90% 55%;
+  --status-error: 0 75% 55%;
 
-  /* Message status ticks */
-  --status-sent: 200 12% 58%;
-  --status-delivered: 200 12% 58%;
-  --status-read: 199 89% 48%; /* Blue ticks */
+  /* Message ticks */
+  --status-sent: 210 10% 45%;
+  --status-delivered: 210 10% 45%;
+  --status-read: 199 90% 48%;
 
   /* Sidebar */
-  --sidebar-background: 0 0% 100%; /* #FFFFFF */
-  --sidebar-foreground: 200 32% 10%;
-  --sidebar-primary: 142 70% 49%;
+  --sidebar-background: 0 0% 100%;
+  --sidebar-foreground: 210 25% 12%;
+  --sidebar-primary: 142 72% 45%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 200 15% 93%;
-  --sidebar-accent-foreground: 200 32% 10%;
-  --sidebar-border: 200 15% 93%;
-  --sidebar-ring: 142 70% 49%;
+  --sidebar-accent: 210 18% 94%;
+  --sidebar-accent-foreground: 210 25% 12%;
+  --sidebar-border: 210 18% 88%;
+  --sidebar-ring: 142 72% 45%;
 
   /* Header */
-  --header-bg: 200 15% 93%; /* Light grey header */
-  --header-foreground: 200 32% 10%;
+  --header-bg: 210 18% 94%; /* clean light header */
+  --header-foreground: 210 25% 12%;
 }
 
 /* ===== DARK MODE (WhatsApp Web inspired) ===== */
