@@ -1,5 +1,6 @@
 import {Router} from 'express'
 import authUser from '../middleware/authUser.js'
+
 import * as messageController from '../controller/message.controller.js'
 
 const router = Router()

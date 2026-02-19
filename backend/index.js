@@ -5,11 +5,18 @@ import cors from "cors";
 import bodyParser from "body-parser";
 import morgan from "morgan";
 import "dotenv/config";
+import ratelimit from 'express-rate-limit'
 import dbconnect from "./src/config/dbConnection.js";
 
 
 const app = express();
 const port = process.env.PORT || 5000;
+
+const limit = ratelimit({
+  windowMs: 15 * 60 * 1000,
+  max:100,
+  message: "Too many requests, please try again later."
+})
 
 import indexRouter from './src/routes/index.routes.js'
 import initializeSocket from "./src/service/socketService.js";
@@ -21,6 +28,11 @@ app.use(
     credentials:true
   }),
 );
+// app.use(limit)
+app.use((req,res,next)=>{
+    console.log(req.body);
+    next()
+})
 app.use(morgan('dev'))
 app.use(express.json()); // parse body data
 app.use(cookieParser()); // parse token every requiest

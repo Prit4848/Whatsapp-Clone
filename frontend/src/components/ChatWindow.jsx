@@ -128,7 +128,6 @@ const ChatWindow = () => {
 
   return (
     <div className="flex-1 flex flex-col h-full bg-chat-bg">
-
       {/* ── Chat Header ── */}
       <header className="flex items-center gap-3 px-3 py-2 bg-card/95 backdrop-blur-sm border-b border-border/60 shadow-sm">
         {/* Back button (mobile) */}
@@ -196,31 +195,31 @@ const ChatWindow = () => {
               <MoreVertical className="w-[18px] h-[18px]" />
             </button>
 
-            {showMenu && (
-              <div className="absolute right-0 top-full mt-1.5 w-48 bg-popover border border-border/60 rounded-xl shadow-lg z-50 overflow-hidden py-1">
-                <button
-                  onClick={() => {
-                    handleDeleteChat();
-                    setShowMenu(false);
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-destructive hover:bg-destructive/8 transition-colors"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  Delete Chat
-                </button>
-                <div className="mx-3 h-px bg-border/50" />
-                <button
-                  onClick={() => {
-                    handleClearChat();
-                    setShowMenu(false);
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-foreground hover:bg-muted transition-colors"
-                >
-                  <Eraser className="w-3.5 h-3.5 text-muted-foreground" />
-                  Clear Chat
-                </button>
-              </div>
-            )}
+            {showMenu &&(
+                <div className="absolute right-0 top-full mt-1.5 w-48 bg-popover border border-border/60 rounded-xl shadow-lg z-[9999] overflow-hidden py-1">
+                  <button
+                    onClick={() => {
+                      handleDeleteChat();
+                      setShowMenu(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-destructive hover:bg-destructive/8 transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Delete Chat
+                  </button>
+                  <div className="mx-3 h-px bg-border/50" />
+                  <button
+                    onClick={() => {
+                      handleClearChat();
+                      setShowMenu(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-foreground hover:bg-muted transition-colors"
+                  >
+                    <Eraser className="w-3.5 h-3.5 text-muted-foreground" />
+                    Clear Chat
+                  </button>
+                </div>
+              )}
           </div>
         </div>
       </header>

@@ -73,8 +73,7 @@ const initializeSocket = (server) => {
               messageId,
               messageStatus: "read",
             });
-          });
-          console.log("read");
+          })
         }
       } catch (error) {
         console.log("Error Updating Message", error.message);
