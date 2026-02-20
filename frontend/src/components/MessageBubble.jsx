@@ -6,6 +6,14 @@ import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
 
 const EMOJI_LIST = ["❤️", "😂", "😮", "😢", "😡", "👍"];
+const EMOJI_CATEGORIES = {
+  "😊 Smileys": ["😀","😃","😄","😁","😆","😅","😂","🤣","😊","😇","🙂","🙃","😉","😌","😍","🥰","😘","😗","😙","😚","😋","😛","😝","😜","🤪","🤨","🧐","🤓","😎","🥸","🤩","🥳","😏","😒","😞","😔","😟","😕","🙁","☹️","😣","😖","😫","😩","🥺","😢","😭","😤","😠","😡","🤬","🤯","😳","🥵","🥶","😱","😨","😰","😥","😓","🫣","🤗","🫡","🤔","🫠","🤭","🤫","🤥","😶","😑","😬","🙄","😯","😦","😧","😮","😲","🥱","😴","🤤","😪","😵","🫥","🤐","🥴","🤢","🤮","🤧","😷","🤒","🤕"],
+  "👋 Gestures": ["👋","🤚","🖐","✋","🖖","👌","🤌","🤏","✌️","🤞","🫰","🤟","🤘","🤙","👈","👉","👆","🖕","👇","☝️","🫵","👍","👎","✊","👊","🤛","🤜","👏","🙌","🫶","👐","🤲","🤝","🙏","✍️","💅","🤳","💪","🦵","🦶","👂","🦻","👃","🫀","🫁","🧠","🦷","🦴","👀","👁","👅","👄","🫦"],
+  "❤️ Hearts": ["❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❤️‍🔥","❤️‍🩹","❣️","💕","💞","💓","💗","💖","💘","💝","💟","☮️","✝️","☪️","🕉","✡️","🔯","🪯"],
+  "🎉 Fun": ["🎉","🎊","🎈","🎁","🎀","🪅","🎆","🎇","🧨","✨","🎯","🎮","🕹","🎲","🧩","🃏","🎰","🎳","🏆","🥇","🥈","🥉","🏅","🎖","🎗","🎫","🎟","🎪","🎭","🎨","🖼","🎬","🎤","🎧","🎼","🎵","🎶","🎙","📻","🎷","🎸","🎹","🎺","🎻","🪗","🥁","🪘"],
+  "🐶 Animals": ["🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐮","🐷","🐸","🐵","🐔","🐧","🐦","🦆","🦅","🦉","🦇","🐺","🐗","🐴","🦄","🐝","🐛","🦋","🐌","🐞","🐜","🪲","🦟","🦗","🪳","🕷","🦂","🐢","🐍","🦎","🦖","🦕","🐙","🦑","🦐","🦞","🦀","🐡","🐠","🐟","🐬","🐳","🐋","🦈","🦭","🐊","🐅","🐆","🦓","🦍","🦧","🦣","🐘","🦛","🦏","🐪","🐫","🦒","🦘","🦬","🐃","🐂","🐄","🐎","🐖","🐏","🐑","🦙","🐐","🦌","🐕","🐩","🦮","🐕‍🦺","🐈","🐈‍⬛","🪶","🐓","🦃"],
+  "🍕 Food": ["🍕","🍔","🌮","🌯","🍟","🍗","🥩","🥓","🍳","🥚","🧇","🥞","🧈","🥐","🍞","🥖","🥨","🧀","🥗","🥙","🫔","🥪","🥫","🍱","🍘","🍙","🍚","🍛","🍜","🍝","🍠","🍢","🍣","🍤","🍥","🥮","🍡","🥟","🥠","🥡","🍦","🍧","🍨","🍩","🍪","🎂","🍰","🧁","🥧","🍫","🍬","🍭","🍮","🍯","🍼","🥛","☕","🍵","🧃","🥤","🧋","🍶","🍺","🍻","🥂","🍷","🥃","🍸","🍹","🧉","🍾"],
+};
 
 const MessageBubble = ({ message, isOwn }) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -18,7 +26,7 @@ const MessageBubble = ({ message, isOwn }) => {
   const emojiRef = useRef(null);
   const bubbleRef = useRef(null);
   const { socket, authUser } = useAuthStore();
-  const { markMessageRead, setunreadCountZero, deleteMessage, updateMessage } = useChatStore();
+  const { markMessageRead, setunreadCountZero, deleteMessage, updateMessage ,addReactions} = useChatStore();
 
   const isImage = message.contentType === "image";
   const isVideo = message.contentType === "video";
@@ -44,6 +52,15 @@ const MessageBubble = ({ message, isOwn }) => {
     };
   }, [message._id, message.messageStatus]);
 
+  const convertReactions = (reactionArray) => {
+  const grouped = {};
+  reactionArray?.forEach((r) => {
+    if (!grouped[r.emoji]) grouped[r.emoji] = [];
+    grouped[r.emoji].push(r.user);
+  });
+  return grouped;
+};
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target))
@@ -68,7 +85,7 @@ const MessageBubble = ({ message, isOwn }) => {
 
   // Sync reactions if message prop updates
   useEffect(() => {
-    setReactions(message.reactions || {});
+    setReactions(convertReactions(message.reactions));
   }, [message.reactions]);
 
   const handleEdit = () => {
@@ -104,32 +121,12 @@ const MessageBubble = ({ message, isOwn }) => {
     }
   };
 
-  const handleReact = (emoji) => {
-    setReactions((prev) => {
-      const updated = { ...prev };
-      const userId = authUser?._id;
-      // Toggle: if user already reacted with same emoji, remove it
-      if (updated[emoji]?.includes(userId)) {
-        updated[emoji] = updated[emoji].filter((id) => id !== userId);
-        if (updated[emoji].length === 0) delete updated[emoji];
-      } else {
-        // Remove any previous reaction by this user
-        Object.keys(updated).forEach((e) => {
-          if (updated[e]?.includes(userId)) {
-            updated[e] = updated[e].filter((id) => id !== userId);
-            if (updated[e].length === 0) delete updated[e];
-          }
-        });
-        updated[emoji] = [...(updated[emoji] || []), userId];
-      }
-      // Optionally: emit via socket or call an API here
-      // socket?.emit("reactMessage", { messageId: message._id, emoji, reactions: updated });
-      return updated;
-    });
-    setShowEmojiPicker(false);
-  };
+ const handleReact = (emoji) => {
+  addReactions(message._id, emoji);
+  setShowEmojiPicker(false);
+};
 
-  const reactionEntries = Object.entries(reactions).filter(([, users]) => users.length > 0);
+  const reactionEntries = Object.entries(reactions)
 
   return (
     <div
@@ -168,21 +165,37 @@ const MessageBubble = ({ message, isOwn }) => {
                     isOwn ? "right-0" : "left-0"
                   } flex items-center gap-1 bg-popover border border-border/60 rounded-2xl shadow-lg px-2.5 py-1.5 z-50`}
                 >
-                  {EMOJI_LIST.map((emoji) => {
-                    const isActive = reactions[emoji]?.includes(authUser?._id);
-                    return (
-                      <button
-                        key={emoji}
-                        onClick={() => handleReact(emoji)}
-                        className={`text-lg leading-none transition-transform hover:scale-125 rounded-full p-0.5 ${
-                          isActive ? "bg-primary/15 ring-1 ring-primary/40" : ""
-                        }`}
-                        aria-label={`React with ${emoji}`}
-                      >
-                        {emoji}
-                      </button>
-                    );
-                  })}
+                  {showEmojiPicker && (
+  <div
+    className={`absolute bottom-full mb-2 ${
+      isOwn ? "right-0" : "left-0"
+    } w-[300px] max-h-[260px] overflow-y-auto bg-popover border border-border/60 rounded-2xl shadow-lg p-2 z-50`}
+  >
+    {Object.entries(EMOJI_CATEGORIES).map(([category, emojis]) => (
+      <div key={category} className="mb-2">
+        <div className="text-xs text-muted-foreground mb-1 px-1">
+          {category}
+        </div>
+        <div className="grid grid-cols-8 gap-1">
+          {emojis.map((emoji) => {
+            const isActive = reactions[emoji]?.includes(authUser?._id);
+            return (
+              <button
+                key={emoji}
+                onClick={() => handleReact(emoji)}
+                className={`text-lg p-1 rounded-lg hover:scale-125 transition ${
+                  isActive ? "bg-primary/20" : ""
+                }`}
+              >
+                {emoji}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    ))}
+  </div>
+)}
                 </div>
               )}
             </div>

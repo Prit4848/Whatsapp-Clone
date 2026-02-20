@@ -6,10 +6,9 @@ import Message from "../models/Message.js";
 
 export const sendMessage = asyncHandler(async (req, res) => {
   const { senderId, receiverId, content, messageStatus } = req.body;
-  console.log(req.body);
-  
   const participants = [senderId, receiverId].sort();
-
+ console.log(req.body);
+ 
   let conversation = await Conversation.findOne({ participants });
 
   if (!conversation) {
@@ -50,6 +49,8 @@ export const sendMessage = asyncHandler(async (req, res) => {
     content,
     messageStatus,
   });
+  console.log(message);
+  
   await message.save();
   if (message.content) {
     conversation.lastMessage = message._id;

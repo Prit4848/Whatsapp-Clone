@@ -146,7 +146,7 @@ const initializeSocket = (server) => {
         );
 
         if (existingIndex > -1) {
-          const existing = message.reactions(existingIndex);
+          const existing = message.reactions[existingIndex];
           if (existing.emoji === emoji) {
             message.reactions.splice(existingIndex, 1);
           } else {
@@ -180,7 +180,7 @@ const initializeSocket = (server) => {
         if (senderSocket)
           io.to(senderSocket).emit("reaction_update", reactionUpdated);
         if (receiverSocket)
-          io.to(receiverSocket).emit("rection_update", reactionUpdated);
+         io.to(receiverSocket).emit("reaction_update", reactionUpdated);
       } catch (error) {
         console.log("Error handle rections", error.message);
       }
