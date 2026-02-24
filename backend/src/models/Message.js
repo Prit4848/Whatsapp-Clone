@@ -20,12 +20,18 @@ const messageSchema = new mongoose.Schema(
     content: { type: String },
     imageOrVideoUrl: { type: String },
     contentType: { type: String },
-    reactions: [
-      {
-        users: { type: mongoose.Schema.Types.ObjectId, ref: "user" },
-        emoji: { type: String },
-      },
-    ],
+  reactions: [
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user",
+    },
+    emoji: {
+      type: String,
+      required: true,
+    },
+  },
+],
     messageStatus: { type: String, default: "send" },
   },
   { timestamps: true },

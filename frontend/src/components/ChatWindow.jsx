@@ -18,9 +18,12 @@ import { useUserStore } from "../store/useUserStore";
 import { useState } from "react";
 import { PhotoProvider, PhotoView } from "react-photo-view";
 import "react-photo-view/dist/react-photo-view.css";
+import { createPortal } from "react-dom";
 
 const ChatWindow = () => {
   const messagesEndRef = useRef(null);
+  const buttonRef = useRef(null);
+  const [menuPosition, setMenuPosition] = useState(null);
   const {
     activeChat,
     chats,
@@ -43,6 +46,15 @@ const ChatWindow = () => {
   const menuRef = useRef(null);
   const [showProfilePic, setShowProfilePic] = useState(false);
   const messagesContainerRef = useRef(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (showMenu) setShowMenu(false);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [showMenu]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -186,39 +198,84 @@ const ChatWindow = () => {
           </button>
 
           {/* More menu */}
-          <div className="relative" ref={menuRef}>
+          <div className="relative">
             <button
-              onClick={() => setShowMenu((prev) => !prev)}
+              ref={buttonRef}
+              onClick={() => {
+                if (!showMenu) {
+                  const rect = buttonRef.current.getBoundingClientRect();
+
+                  const menuWidth = 192;
+                  const screenWidth = window.innerWidth;
+
+                  let left = rect.right - menuWidth;
+
+                  // Prevent overflow on left side
+                  if (left < 8) left = 8;
+
+                  // Prevent overflow on right side
+                  if (left + menuWidth > screenWidth - 8) {
+                    left = screenWidth - menuWidth - 8;
+                  }
+
+                  setMenuPosition({
+                    top: rect.bottom + window.scrollY + 6,
+                    left,
+                  });
+                }
+
+                setShowMenu((prev) => !prev);
+              }}
               className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
               aria-label="More options"
             >
               <MoreVertical className="w-[18px] h-[18px]" />
             </button>
 
-            {showMenu &&(
-                <div className="absolute right-0 top-full mt-1.5 w-48 bg-popover border border-border/60 rounded-xl shadow-lg z-[9999] overflow-hidden py-1">
-                  <button
-                    onClick={() => {
-                      handleDeleteChat();
-                      setShowMenu(false);
+            {showMenu &&
+              menuPosition &&
+              createPortal(
+                <div className="fixed inset-0 z-[99999]">
+                  {/* Blur background */}
+                  <div
+                    className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+                    onClick={() => setShowMenu(false)}
+                  />
+
+                  {/* Menu */}
+                  <div
+                    style={{
+                      top: menuPosition.top,
+                      left: menuPosition.left,
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-destructive hover:bg-destructive/8 transition-colors"
+                    className="absolute w-48 bg-popover border border-border/60 rounded-xl shadow-2xl py-1 animate-scale-in"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    Delete Chat
-                  </button>
-                  <div className="mx-3 h-px bg-border/50" />
-                  <button
-                    onClick={() => {
-                      handleClearChat();
-                      setShowMenu(false);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-foreground hover:bg-muted transition-colors"
-                  >
-                    <Eraser className="w-3.5 h-3.5 text-muted-foreground" />
-                    Clear Chat
-                  </button>
-                </div>
+                    <button
+                      onClick={() => {
+                        handleDeleteChat();
+                        setShowMenu(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-destructive hover:bg-destructive/10 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Delete Chat
+                    </button>
+
+                    <div className="mx-3 h-px bg-border/50" />
+
+                    <button
+                      onClick={() => {
+                        handleClearChat();
+                        setShowMenu(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-foreground hover:bg-muted transition-colors"
+                    >
+                      <Eraser className="w-3.5 h-3.5 text-muted-foreground" />
+                      Clear Chat
+                    </button>
+                  </div>
+                </div>,
+                document.body,
               )}
           </div>
         </div>

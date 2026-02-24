@@ -4,15 +4,401 @@ import MessageStatus from "./MessageStatus";
 import { formatMessageTime } from "../utils/helpers";
 import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
+import EmojiPicker from "emoji-picker-react";
 
-const EMOJI_LIST = ["❤️", "😂", "😮", "😢", "😡", "👍"];
 const EMOJI_CATEGORIES = {
-  "😊 Smileys": ["😀","😃","😄","😁","😆","😅","😂","🤣","😊","😇","🙂","🙃","😉","😌","😍","🥰","😘","😗","😙","😚","😋","😛","😝","😜","🤪","🤨","🧐","🤓","😎","🥸","🤩","🥳","😏","😒","😞","😔","😟","😕","🙁","☹️","😣","😖","😫","😩","🥺","😢","😭","😤","😠","😡","🤬","🤯","😳","🥵","🥶","😱","😨","😰","😥","😓","🫣","🤗","🫡","🤔","🫠","🤭","🤫","🤥","😶","😑","😬","🙄","😯","😦","😧","😮","😲","🥱","😴","🤤","😪","😵","🫥","🤐","🥴","🤢","🤮","🤧","😷","🤒","🤕"],
-  "👋 Gestures": ["👋","🤚","🖐","✋","🖖","👌","🤌","🤏","✌️","🤞","🫰","🤟","🤘","🤙","👈","👉","👆","🖕","👇","☝️","🫵","👍","👎","✊","👊","🤛","🤜","👏","🙌","🫶","👐","🤲","🤝","🙏","✍️","💅","🤳","💪","🦵","🦶","👂","🦻","👃","🫀","🫁","🧠","🦷","🦴","👀","👁","👅","👄","🫦"],
-  "❤️ Hearts": ["❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❤️‍🔥","❤️‍🩹","❣️","💕","💞","💓","💗","💖","💘","💝","💟","☮️","✝️","☪️","🕉","✡️","🔯","🪯"],
-  "🎉 Fun": ["🎉","🎊","🎈","🎁","🎀","🪅","🎆","🎇","🧨","✨","🎯","🎮","🕹","🎲","🧩","🃏","🎰","🎳","🏆","🥇","🥈","🥉","🏅","🎖","🎗","🎫","🎟","🎪","🎭","🎨","🖼","🎬","🎤","🎧","🎼","🎵","🎶","🎙","📻","🎷","🎸","🎹","🎺","🎻","🪗","🥁","🪘"],
-  "🐶 Animals": ["🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐮","🐷","🐸","🐵","🐔","🐧","🐦","🦆","🦅","🦉","🦇","🐺","🐗","🐴","🦄","🐝","🐛","🦋","🐌","🐞","🐜","🪲","🦟","🦗","🪳","🕷","🦂","🐢","🐍","🦎","🦖","🦕","🐙","🦑","🦐","🦞","🦀","🐡","🐠","🐟","🐬","🐳","🐋","🦈","🦭","🐊","🐅","🐆","🦓","🦍","🦧","🦣","🐘","🦛","🦏","🐪","🐫","🦒","🦘","🦬","🐃","🐂","🐄","🐎","🐖","🐏","🐑","🦙","🐐","🦌","🐕","🐩","🦮","🐕‍🦺","🐈","🐈‍⬛","🪶","🐓","🦃"],
-  "🍕 Food": ["🍕","🍔","🌮","🌯","🍟","🍗","🥩","🥓","🍳","🥚","🧇","🥞","🧈","🥐","🍞","🥖","🥨","🧀","🥗","🥙","🫔","🥪","🥫","🍱","🍘","🍙","🍚","🍛","🍜","🍝","🍠","🍢","🍣","🍤","🍥","🥮","🍡","🥟","🥠","🥡","🍦","🍧","🍨","🍩","🍪","🎂","🍰","🧁","🥧","🍫","🍬","🍭","🍮","🍯","🍼","🥛","☕","🍵","🧃","🥤","🧋","🍶","🍺","🍻","🥂","🍷","🥃","🍸","🍹","🧉","🍾"],
+  "😊 Smileys": [
+    "😀",
+    "😃",
+    "😄",
+    "😁",
+    "😆",
+    "😅",
+    "😂",
+    "🤣",
+    "😊",
+    "😇",
+    "🙂",
+    "🙃",
+    "😉",
+    "😌",
+    "😍",
+    "🥰",
+    "😘",
+    "😗",
+    "😙",
+    "😚",
+    "😋",
+    "😛",
+    "😝",
+    "😜",
+    "🤪",
+    "🤨",
+    "🧐",
+    "🤓",
+    "😎",
+    "🥸",
+    "🤩",
+    "🥳",
+    "😏",
+    "😒",
+    "😞",
+    "😔",
+    "😟",
+    "😕",
+    "🙁",
+    "☹️",
+    "😣",
+    "😖",
+    "😫",
+    "😩",
+    "🥺",
+    "😢",
+    "😭",
+    "😤",
+    "😠",
+    "😡",
+    "🤬",
+    "🤯",
+    "😳",
+    "🥵",
+    "🥶",
+    "😱",
+    "😨",
+    "😰",
+    "😥",
+    "😓",
+    "🫣",
+    "🤗",
+    "🫡",
+    "🤔",
+    "🫠",
+    "🤭",
+    "🤫",
+    "🤥",
+    "😶",
+    "😑",
+    "😬",
+    "🙄",
+    "😯",
+    "😦",
+    "😧",
+    "😮",
+    "😲",
+    "🥱",
+    "😴",
+    "🤤",
+    "😪",
+    "😵",
+    "🫥",
+    "🤐",
+    "🥴",
+    "🤢",
+    "🤮",
+    "🤧",
+    "😷",
+    "🤒",
+    "🤕",
+  ],
+  "👋 Gestures": [
+    "👋",
+    "🤚",
+    "🖐",
+    "✋",
+    "🖖",
+    "👌",
+    "🤌",
+    "🤏",
+    "✌️",
+    "🤞",
+    "🫰",
+    "🤟",
+    "🤘",
+    "🤙",
+    "👈",
+    "👉",
+    "👆",
+    "🖕",
+    "👇",
+    "☝️",
+    "🫵",
+    "👍",
+    "👎",
+    "✊",
+    "👊",
+    "🤛",
+    "🤜",
+    "👏",
+    "🙌",
+    "🫶",
+    "👐",
+    "🤲",
+    "🤝",
+    "🙏",
+    "✍️",
+    "💅",
+    "🤳",
+    "💪",
+    "🦵",
+    "🦶",
+    "👂",
+    "🦻",
+    "👃",
+    "🫀",
+    "🫁",
+    "🧠",
+    "🦷",
+    "🦴",
+    "👀",
+    "👁",
+    "👅",
+    "👄",
+    "🫦",
+  ],
+  "❤️ Hearts": [
+    "❤️",
+    "🧡",
+    "💛",
+    "💚",
+    "💙",
+    "💜",
+    "🖤",
+    "🤍",
+    "🤎",
+    "💔",
+    "❤️‍🔥",
+    "❤️‍🩹",
+    "❣️",
+    "💕",
+    "💞",
+    "💓",
+    "💗",
+    "💖",
+    "💘",
+    "💝",
+    "💟",
+    "☮️",
+    "✝️",
+    "☪️",
+    "🕉",
+    "✡️",
+    "🔯",
+    "🪯",
+  ],
+  "🎉 Fun": [
+    "🎉",
+    "🎊",
+    "🎈",
+    "🎁",
+    "🎀",
+    "🪅",
+    "🎆",
+    "🎇",
+    "🧨",
+    "✨",
+    "🎯",
+    "🎮",
+    "🕹",
+    "🎲",
+    "🧩",
+    "🃏",
+    "🎰",
+    "🎳",
+    "🏆",
+    "🥇",
+    "🥈",
+    "🥉",
+    "🏅",
+    "🎖",
+    "🎗",
+    "🎫",
+    "🎟",
+    "🎪",
+    "🎭",
+    "🎨",
+    "🖼",
+    "🎬",
+    "🎤",
+    "🎧",
+    "🎼",
+    "🎵",
+    "🎶",
+    "🎙",
+    "📻",
+    "🎷",
+    "🎸",
+    "🎹",
+    "🎺",
+    "🎻",
+    "🪗",
+    "🥁",
+    "🪘",
+  ],
+  "🐶 Animals": [
+    "🐶",
+    "🐱",
+    "🐭",
+    "🐹",
+    "🐰",
+    "🦊",
+    "🐻",
+    "🐼",
+    "🐨",
+    "🐯",
+    "🦁",
+    "🐮",
+    "🐷",
+    "🐸",
+    "🐵",
+    "🐔",
+    "🐧",
+    "🐦",
+    "🦆",
+    "🦅",
+    "🦉",
+    "🦇",
+    "🐺",
+    "🐗",
+    "🐴",
+    "🦄",
+    "🐝",
+    "🐛",
+    "🦋",
+    "🐌",
+    "🐞",
+    "🐜",
+    "🪲",
+    "🦟",
+    "🦗",
+    "🪳",
+    "🕷",
+    "🦂",
+    "🐢",
+    "🐍",
+    "🦎",
+    "🦖",
+    "🦕",
+    "🐙",
+    "🦑",
+    "🦐",
+    "🦞",
+    "🦀",
+    "🐡",
+    "🐠",
+    "🐟",
+    "🐬",
+    "🐳",
+    "🐋",
+    "🦈",
+    "🦭",
+    "🐊",
+    "🐅",
+    "🐆",
+    "🦓",
+    "🦍",
+    "🦧",
+    "🦣",
+    "🐘",
+    "🦛",
+    "🦏",
+    "🐪",
+    "🐫",
+    "🦒",
+    "🦘",
+    "🦬",
+    "🐃",
+    "🐂",
+    "🐄",
+    "🐎",
+    "🐖",
+    "🐏",
+    "🐑",
+    "🦙",
+    "🐐",
+    "🦌",
+    "🐕",
+    "🐩",
+    "🦮",
+    "🐕‍🦺",
+    "🐈",
+    "🐈‍⬛",
+    "🪶",
+    "🐓",
+    "🦃",
+  ],
+  "🍕 Food": [
+    "🍕",
+    "🍔",
+    "🌮",
+    "🌯",
+    "🍟",
+    "🍗",
+    "🥩",
+    "🥓",
+    "🍳",
+    "🥚",
+    "🧇",
+    "🥞",
+    "🧈",
+    "🥐",
+    "🍞",
+    "🥖",
+    "🥨",
+    "🧀",
+    "🥗",
+    "🥙",
+    "🫔",
+    "🥪",
+    "🥫",
+    "🍱",
+    "🍘",
+    "🍙",
+    "🍚",
+    "🍛",
+    "🍜",
+    "🍝",
+    "🍠",
+    "🍢",
+    "🍣",
+    "🍤",
+    "🍥",
+    "🥮",
+    "🍡",
+    "🥟",
+    "🥠",
+    "🥡",
+    "🍦",
+    "🍧",
+    "🍨",
+    "🍩",
+    "🍪",
+    "🎂",
+    "🍰",
+    "🧁",
+    "🥧",
+    "🍫",
+    "🍬",
+    "🍭",
+    "🍮",
+    "🍯",
+    "🍼",
+    "🥛",
+    "☕",
+    "🍵",
+    "🧃",
+    "🥤",
+    "🧋",
+    "🍶",
+    "🍺",
+    "🍻",
+    "🥂",
+    "🍷",
+    "🥃",
+    "🍸",
+    "🍹",
+    "🧉",
+    "🍾",
+  ],
 };
 
 const MessageBubble = ({ message, isOwn }) => {
@@ -21,12 +407,18 @@ const MessageBubble = ({ message, isOwn }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(message.content);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [reactions, setReactions] = useState(message.reactions || {});
+  // const [reactions, setReactions] = useState(message.reactions || {});
   const menuRef = useRef(null);
   const emojiRef = useRef(null);
   const bubbleRef = useRef(null);
   const { socket, authUser } = useAuthStore();
-  const { markMessageRead, setunreadCountZero, deleteMessage, updateMessage ,addReactions} = useChatStore();
+  const {
+    markMessageRead,
+    setunreadCountZero,
+    deleteMessage,
+    updateMessage,
+    addReactions,
+  } = useChatStore();
 
   const isImage = message.contentType === "image";
   const isVideo = message.contentType === "video";
@@ -43,7 +435,7 @@ const MessageBubble = ({ message, isOwn }) => {
           if (entry.isIntersecting) markMessageRead(message._id);
         });
       },
-      { threshold: 0.6 }
+      { threshold: 0.6 },
     );
 
     observer.observe(bubbleRef.current);
@@ -53,13 +445,23 @@ const MessageBubble = ({ message, isOwn }) => {
   }, [message._id, message.messageStatus]);
 
   const convertReactions = (reactionArray) => {
-  const grouped = {};
-  reactionArray?.forEach((r) => {
-    if (!grouped[r.emoji]) grouped[r.emoji] = [];
-    grouped[r.emoji].push(r.user);
-  });
-  return grouped;
-};
+    if (!Array.isArray(reactionArray)) return {};
+
+    const grouped = {};
+
+    reactionArray.forEach((reaction) => {
+      const emoji = reaction.emoji;
+      const userId = reaction.user;
+
+      if (!grouped[emoji]) {
+        grouped[emoji] = [];
+      }
+
+      grouped[emoji].push(userId);
+    });
+
+    return grouped;
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -75,7 +477,8 @@ const MessageBubble = ({ message, isOwn }) => {
       if (emojiRef.current && !emojiRef.current.contains(event.target))
         setShowEmojiPicker(false);
     };
-    if (showEmojiPicker) document.addEventListener("mousedown", handleClickOutside);
+    if (showEmojiPicker)
+      document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showEmojiPicker]);
 
@@ -84,9 +487,9 @@ const MessageBubble = ({ message, isOwn }) => {
   }, [socket]);
 
   // Sync reactions if message prop updates
-  useEffect(() => {
-    setReactions(convertReactions(message.reactions));
-  }, [message.reactions]);
+  //   useEffect(() => {
+  //   setReactions(convertReactions(message.reactions));
+  // }, [message.reactions]);
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -121,12 +524,12 @@ const MessageBubble = ({ message, isOwn }) => {
     }
   };
 
- const handleReact = (emoji) => {
-  addReactions(message._id, emoji);
-  setShowEmojiPicker(false);
-};
+  const handleReact = (emoji) => {
+    addReactions(message._id, emoji);
+    setShowEmojiPicker(false);
+  };
 
-  const reactionEntries = Object.entries(reactions)
+  const reactionEntries = Object.entries(convertReactions(message.reactions));
 
   return (
     <div
@@ -145,7 +548,9 @@ const MessageBubble = ({ message, isOwn }) => {
         {/* Action buttons: emoji + 3-dot menu */}
         <div
           className={`flex flex-col items-center gap-0.5 flex-shrink-0 transition-opacity duration-150 ${
-            isHovered || isMenuOpen || showEmojiPicker ? "opacity-100" : "opacity-0 pointer-events-none"
+            isHovered || isMenuOpen || showEmojiPicker
+              ? "opacity-100"
+              : "opacity-0 pointer-events-none"
           }`}
         >
           {/* Emoji reaction button */}
@@ -159,45 +564,28 @@ const MessageBubble = ({ message, isOwn }) => {
                 <Smile className="w-3.5 h-3.5 text-muted-foreground" />
               </button>
 
-              {showEmojiPicker && (
-                <div
-                  className={`absolute bottom-full mb-2 ${
-                    isOwn ? "right-0" : "left-0"
-                  } flex items-center gap-1 bg-popover border border-border/60 rounded-2xl shadow-lg px-2.5 py-1.5 z-50`}
-                >
-                  {showEmojiPicker && (
-  <div
-    className={`absolute bottom-full mb-2 ${
-      isOwn ? "right-0" : "left-0"
-    } w-[300px] max-h-[260px] overflow-y-auto bg-popover border border-border/60 rounded-2xl shadow-lg p-2 z-50`}
-  >
-    {Object.entries(EMOJI_CATEGORIES).map(([category, emojis]) => (
-      <div key={category} className="mb-2">
-        <div className="text-xs text-muted-foreground mb-1 px-1">
-          {category}
-        </div>
-        <div className="grid grid-cols-8 gap-1">
-          {emojis.map((emoji) => {
-            const isActive = reactions[emoji]?.includes(authUser?._id);
-            return (
-              <button
-                key={emoji}
-                onClick={() => handleReact(emoji)}
-                className={`text-lg p-1 rounded-lg hover:scale-125 transition ${
-                  isActive ? "bg-primary/20" : ""
-                }`}
-              >
-                {emoji}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    ))}
+             {showEmojiPicker && (
+  <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+    
+    {/* Blur Background */}
+    <div
+      className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+      onClick={() => setShowEmojiPicker(false)}
+    />
+
+    {/* Emoji Picker Modal */}
+    <div className="relative z-10 bg-popover rounded-2xl shadow-2xl p-3 animate-scale-in">
+      <EmojiPicker
+        onEmojiClick={(emojiData) => handleReact(emojiData.emoji)}
+        autoFocusSearch={false}
+        theme="dark"
+        height={400}
+        width={350}
+        previewConfig={{ showPreview: false }}
+      />
+    </div>
   </div>
 )}
-                </div>
-              )}
             </div>
           )}
 
@@ -264,7 +652,9 @@ const MessageBubble = ({ message, isOwn }) => {
                   loading="lazy"
                 />
                 {message.content && (
-                  <p className="mt-2 text-sm leading-relaxed">{message.content}</p>
+                  <p className="mt-2 text-sm leading-relaxed">
+                    {message.content}
+                  </p>
                 )}
               </div>
             )}
@@ -278,7 +668,9 @@ const MessageBubble = ({ message, isOwn }) => {
                   className="rounded-xl max-w-full h-auto"
                 />
                 {message.content && (
-                  <p className="mt-2 text-sm leading-relaxed">{message.content}</p>
+                  <p className="mt-2 text-sm leading-relaxed">
+                    {message.content}
+                  </p>
                 )}
               </div>
             )}
@@ -341,24 +733,36 @@ const MessageBubble = ({ message, isOwn }) => {
             <div
               className={`flex flex-wrap gap-1 mt-1 ${isOwn ? "justify-end" : "justify-start"}`}
             >
-              {reactionEntries.map(([emoji, users]) => {
-                const isActive = users.includes(authUser?._id);
-                return (
-                  <button
-                    key={emoji}
-                    onClick={() => handleReact(emoji)}
-                    className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[12px] border transition-colors ${
-                      isActive
-                        ? "bg-primary/15 border-primary/40 text-primary"
-                        : "bg-muted/60 border-border/50 text-foreground hover:bg-muted"
-                    }`}
-                    aria-label={`${emoji} ${users.length}`}
-                  >
-                    <span>{emoji}</span>
-                    <span className="font-medium leading-none">{users.length}</span>
-                  </button>
-                );
-              })}
+              {reactionEntries.length > 0 && (
+                <div
+                  className={`flex flex-wrap gap-1 mt-1 ${
+                    isOwn ? "justify-end" : "justify-start"
+                  }`}
+                >
+                  {reactionEntries.map(([emoji, users]) => {
+                    const userArray = Array.isArray(users) ? users : [];
+                    const isActive = userArray.includes(authUser?._id);
+
+                    return (
+                      <button
+                        key={emoji}
+                        onClick={() => handleReact(emoji)}
+                        className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[12px] border transition-colors ${
+                          isActive
+                            ? "bg-primary/15 border-primary/40 text-primary"
+                            : "bg-muted/60 border-border/50 text-foreground hover:bg-muted"
+                        }`}
+                        aria-label={`${emoji} ${userArray.length}`}
+                      >
+                        <span>{emoji}</span>
+                        <span className="font-medium leading-none">
+                          {userArray.length}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>

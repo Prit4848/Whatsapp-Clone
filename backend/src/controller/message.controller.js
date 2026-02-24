@@ -92,7 +92,7 @@ export const getMessages = asyncHandler(async (req, res) => {
   const message = await Message.find({ conversation: conversationId })
     .populate("sender", "username profilePicture")
     .populate("receiver", "username profilePicture")
-    .sort({ updatedAt: 1 });
+    .sort({ createdAt: 1 });
 
   await Message.updateMany(
     {

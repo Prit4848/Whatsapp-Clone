@@ -73,7 +73,7 @@ const initializeSocket = (server) => {
               messageId,
               messageStatus: "read",
             });
-          })
+          });
         }
       } catch (error) {
         console.log("Error Updating Message", error.message);
@@ -84,9 +84,9 @@ const initializeSocket = (server) => {
       if (!conversationId || !receiverId || !userId) return;
 
       const receiverSocketId = OnlineUsers.get(receiverId);
-      console.log("send",receiverSocketId);
+      console.log("send", receiverSocketId);
       if (!receiverSocketId) return;
-       
+
       // Emit immediately
       io.to(receiverSocketId).emit("user_typing", {
         userId,
@@ -135,55 +135,69 @@ const initializeSocket = (server) => {
       });
     });
 
-    socket.on("add_reaction", async ({ messageId, emoji, reactionUserId }) => {
+    socket.on("add_reactions", async ({ messageId, emoji, reactionUserId }) => {
       try {
-        const message = await Message.findById(messageId);
 
-        if (!message) return;
+    const message = await Message.findOne({
+      _id: messageId,
+      "reactions.user": reactionUserId,
+    });
 
-        const existingIndex = message.reactions.findIndex(
-          (r) => r.user.toString() === reactionUserId,
+    if (message) {
+      const existingReaction = message.reactions.find(
+        (r) => r.user.toString() === reactionUserId.toString()
+      );
+     console.log(existingReaction);
+     
+      if (existingReaction.emoji === emoji) {
+        // Remove reaction (toggle off)
+        await Message.updateOne(
+          { _id: messageId },
+          { $pull: { reactions: { user: reactionUserId } } }
         );
-
-        if (existingIndex > -1) {
-          const existing = message.reactions[existingIndex];
-          if (existing.emoji === emoji) {
-            message.reactions.splice(existingIndex, 1);
-          } else {
-            message.reactions[existingIndex].emoji = emoji;
-          }
-        } else {
-          message.reactions.push({ user: reactionUserId, emoji });
-        }
-
-        await message.save();
-
-        const popolateMessage = await Message.findOne({
-          _id: message._id,
-        })
-          .populate("sender", "username profilePicture")
-          .populate("receiver", "username profilePicture")
-          .populate("reactions.user", "username");
-
-        const reactionUpdated = {
-          messageId,
-          reactions: popolateMessage.reactions,
-        };
-
-        const senderSocket = OnlineUsers.get(
-          popolateMessage.sender._id.toString(),
+      } else {
+        // Replace emoji
+        await Message.updateOne(
+          { _id: messageId, "reactions.user": reactionUserId },
+          { $set: { "reactions.$.emoji": emoji } }
         );
-        const receiverSocket = OnlineUsers.get(
-          popolateMessage.receiver._id.toString(),
-        );
-
-        if (senderSocket)
-          io.to(senderSocket).emit("reaction_update", reactionUpdated);
-        if (receiverSocket)
-         io.to(receiverSocket).emit("reaction_update", reactionUpdated);
-      } catch (error) {
-        console.log("Error handle rections", error.message);
       }
+
+    } else {
+      // Add new reaction
+      await Message.updateOne(
+        { _id: messageId },
+        { $push: { reactions: { user: reactionUserId, emoji } } }
+      );
+    }
+
+    const updatedMessage = await Message.findById(messageId)
+      .populate("sender", "username profilePicture _id")
+      .populate("receiver", "username profilePicture _id")
+      .populate("reactions.user", "username");
+
+    const reactionUpdated = {
+      messageId,
+      reactions: updatedMessage.reactions,
+    };
+
+    const senderSocket = OnlineUsers.get(
+      updatedMessage.sender._id.toString()
+    );
+
+    const receiverSocket = OnlineUsers.get(
+      updatedMessage.receiver._id.toString()
+    );
+
+    if (senderSocket)
+      io.to(senderSocket).emit("reaction_update", reactionUpdated);
+
+    if (receiverSocket)
+      io.to(receiverSocket).emit("reaction_update", reactionUpdated);
+
+  } catch (error) {
+    console.log("Error handle reactions", error.message);
+  }
     });
 
     const handleDisconected = async () => {

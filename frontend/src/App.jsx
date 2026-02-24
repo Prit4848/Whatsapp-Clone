@@ -6,12 +6,14 @@ import { useEffect } from "react";
 import { useAuthStore } from "./store/useAuthStore";
 import { useChatStore } from "./store/useChatStore";
 import ProfilePage from "./pages/profile-setup/ProfilePage";
+import StatusPage from "./pages/status/StatusPage";
+import { useStatusStore } from "./store/useStatusStore";
 
 const App = () => {
 
   const {checkAuth,isCheckingAuth,authUser,connectSocket,disconnectSocket,socket} = useAuthStore()  
   const {setAllChats,activeChat,setMessage,initializeSocketListeners,isCreateChat} = useChatStore()
-
+  const {fetchStatuses}  = useStatusStore()
   
   useEffect(() => {
     if (!isCheckingAuth) return;
@@ -30,6 +32,7 @@ const App = () => {
   useEffect(() => {
     if (authUser) {
       connectSocket();
+      fetchStatuses()
     }
 
     return () => {
@@ -42,6 +45,7 @@ const App = () => {
     }
   }, [socket])
   
+  
   return (
     <>
     <Toaster position="top-center" />
@@ -49,6 +53,8 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/profile" element={authUser ? <ProfilePage /> : <Index/>} />
+        <Route path="/Status" element={authUser ? <StatusPage /> : <Index/>} />
+        
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>

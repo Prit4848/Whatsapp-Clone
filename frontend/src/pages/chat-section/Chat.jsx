@@ -7,14 +7,22 @@ const Chat = () => {
   const { isMobileView, activeChat, setMobileView } = useChatStore();
 
   // Handle window resize
-  useEffect(() => {
-    const handleResize = () => {
-      setMobileView(window.innerWidth < 768);
-    };
+ useEffect(() => {
+  const mediaQuery = window.matchMedia("(max-width: 767px)");
 
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [setMobileView]);
+  const handleChange = (e) => {
+    setMobileView(e.matches);
+  };
+
+  // Set initial value
+  setMobileView(mediaQuery.matches);
+
+  mediaQuery.addEventListener("change", handleChange);
+
+  return () => {
+    mediaQuery.removeEventListener("change", handleChange);
+  };
+}, [setMobileView]);
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">

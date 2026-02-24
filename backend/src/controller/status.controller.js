@@ -1,144 +1,144 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { response } from "../utils/responseHandler.js";
-import User from '../models/User.js'
+import User from "../models/User.js";
 import { uploadFiletoClodinary } from "../config/clodinaryConfig.js";
 import Status from "../models/Status.js";
 
-export const createStatus = asyncHandler(async (req,res)=>{
-    const {content} = req.body;
-    console.log(content);
-    
-    const userId = req.user._id
+export const createStatus = asyncHandler(async (req, res) => {
+  const { content } = req.body;
+  console.log(req.body);
 
-    const user = await User.findOne({_id:userId})
-    console.log(user);
-    
-    if(!user){
-        return response(res,404,'User Not Found')
-    }
-    let statusUrl = null
-    let initialContentType = null;
-    const file = req.file
-    if(file){
-        const uploadFile = await uploadFiletoClodinary(file)
+  const userId = req.user._id;
 
-        if(!uploadFile.secure_url){
-        return response(res,400,'failed to upload media')
-        }
+  const user = await User.findOne({ _id: userId });
+  if (!user) {
+    return response(res, 404, "User Not Found");
+  }
+  let statusUrl = null;
+  let initialContentType = null;
+  const file = req.file;
+  if (file) {
+    const uploadFile = await uploadFiletoClodinary(file);
 
-        statusUrl = uploadFile.secure_url;
-
-        if(file.mimeType.startsWith("video")){
-            initialContentType = "video"
-        }else if(file.mimeType.startsWith('image')){
-            initialContentType = "image"
-        }else{
-            return response(res,'400','Unsupported File Type')
-        }
-    }else if(content.trim()){
-         initialContentType = 'text'
-    }else{
-        return response(res,400,'message Content is require')
-    }
-    
-    const expiry = new Date()
-    expiry.setHours(expiry.getHours() + 24)
-    const status = new Status({
-       user,
-       contentType:initialContentType,
-       expiredAt:expiry,
-       content:content ? content : statusUrl
-    })
-    console.log(status);
-    
-    await status.save()
-
-    const populateStatus = await Status.findOne({_id:status._id})
-    .populate("user","username profilePicture")
-    .populate("viewer","username profilePicture")
-
-    if(req.io && req.soketUserMap){
-        for(const [connectedUserId,socketId] of req.soketUserMap){
-            if(connectedUserId !== userId){
-               req.io.to(socketId).emit('new_status',populateStatus)
-            }
-        }
+    if (!uploadFile.secure_url) {
+      return response(res, 400, "failed to upload media");
     }
 
-    return response(res,200,'stauts Created',populateStatus)
-})
+    statusUrl = uploadFile.secure_url;
 
-export const getStatus = asyncHandler(async (req,res)=>{
-    const status = await Status.find({expiredAt:{$gt:new Date()}})
-     .populate("user","username profilePicure")
-     .populate("viewer","username profilePicture")
-     .sort({createdAt:-1})
-    
-     return response(res,200,"get status Succesfully",status)
-})
-
-export const viewStatus = asyncHandler(async (req,res)=>{
-    const {statusId} = req.params;
-    const userId = req.user._id
-
-    const status = await Status.findOne({_id:statusId})
-
-    if(!status){
-        return response(res,404,"staus not found")
+    if (file.mimeType.startsWith("video")) {
+      initialContentType = "video";
+    } else if (file.mimeType.startsWith("image")) {
+      initialContentType = "image";
+    } else {
+      return response(res, "400", "Unsupported File Type");
     }
-    let stautsmessage = null;
-    let updatedStatus = null
-    if(!status.viewer.includes(userId)){
-        status.viewer.push(userId)
-        await status.save()
-     stautsmessage = 'status view successfully'
+  } else if (content) {
+    initialContentType = "text";
+  } else {
+    return response(res, 400, "message Content is require");
+  }
 
-     updatedStatus = await Status.findById(userId)
-     .populate('user',"username profilePicture")
-    .populate('viewer','username profilePicture')
+  const expiry = new Date();
+  expiry.setHours(expiry.getHours() + 24);
+  const status = new Status({
+    user,
+    contentType: initialContentType,
+    expiredAt: expiry,
+    content: content ? content : statusUrl,
+  });
+  console.log(status);
 
-     if(req.io && req.soketUserMap){
-        const statusOwnerSocketId = req.soketUserMap.get(status.user._id.toString())
-        if(statusOwnerSocketId){
-           const viewstatus = {
-                statusId,
-                viewerId:userId,
-                totalViewer:updatedStatus.viewer.length,
-                viewer:updatedStatus.viewer
-            }
-            req.io.to(statusOwnerSocketId).emit("status_viewer",viewStatus)
-        }
-     }
-    }else{
-       stautsmessage = 'user alredy view status'
+  await status.save();
+
+  const populateStatus = await Status.findOne({ _id: status._id })
+    .populate("user", "username profilePicture")
+    .populate("viewer", "username profilePicture");
+
+  if (req.io && req.soketUserMap) {
+    for (const [connectedUserId, socketId] of req.soketUserMap) {
+      if (connectedUserId !== userId) {
+        req.io.to(socketId).emit("new_status", populateStatus);
+      }
     }
+  }
 
-    return response(res,200,stautsmessage,updatedStatus)
-})
+  return response(res, 200, "stauts Created", populateStatus);
+});
 
-export const deleteStatus = asyncHandler(async (req,res)=>{
-    const {statusId} = req.params;
-    const userId = req.user._id;
+export const getStatus = asyncHandler(async (req, res) => {
+  const status = await Status.find({ expiredAt: { $gt: new Date() } })
+    .populate("user", "username profilePicture _id")
+    .populate("viewer", "username profilePicture _id")
+    .sort({ createdAt: -1 });
 
-    const status = await Status.findById(statusId)
+  return response(res, 200, "get status Succesfully", status);
+});
 
-    if(!status){
-        return response(res,404,"status not found")
+export const viewStatus = asyncHandler(async (req, res) => {
+  const { statusId } = req.params;
+  const userId = req.user._id;
+
+  const status = await Status.findOne({ _id: statusId });
+
+  if (!status) {
+    return response(res, 404, "staus not found");
+  }
+  let stautsmessage = null;
+  let updatedStatus = null;
+  if (!status.viewer.includes(userId)) {
+    status.viewer.push(userId);
+    await status.save();
+    stautsmessage = "status view successfully";
+
+    updatedStatus = await Status.findById(userId)
+      .populate("user", "username profilePicture _id")
+      .populate("viewer", "username profilePicture _id");
+
+    if (req.io && req.soketUserMap) {
+      const statusOwnerSocketId = req.soketUserMap.get(
+        status.user._id.toString(),
+      );
+      if (statusOwnerSocketId) {
+        const viewstatus = {
+          statusId,
+          viewerId: userId,
+          totalViewer: updatedStatus.viewer.length,
+          viewer: updatedStatus.viewer,
+        };
+        req.io.to(statusOwnerSocketId).emit("status_viewer", viewStatus);
+      }
     }
+  } else {
+    stautsmessage = "user alredy view status";
+  }
 
-    if(userId.toString() !== status.user.toString()){
-        return response(res,401,'You Dont have authorized Delete the Status')
+  return response(res, 200, stautsmessage, updatedStatus);
+});
+
+export const deleteStatus = asyncHandler(async (req, res) => {
+  const { statusId } = req.params;
+  const userId = req.user._id;
+
+  const status = await Status.findById(statusId);
+
+  if (!status) {
+    return response(res, 404, "status not found");
+  }
+
+  if (userId.toString() !== status.user.toString()) {
+    return response(res, 401, "You Dont have authorized Delete the Status");
+  }
+
+  await status.deleteOne();
+
+  if (req.io && req.soketUserMap) {
+    for (const [connectedUserId, socketId] of req.soketUserMap) {
+      if (connectedUserId !== userId) {
+        req.io.to(socketId).emit("delete_status", status._id);
+      }
     }
+  }
 
-    await status.deleteOne()
-
-    if(req.io && req.soketUserMap){
-        for(const [connectedUserId,socketId] of req.soketUserMap){
-            if(connectedUserId !== userId){
-                req.io.to(socketId).emit('delete_status',status._id)
-            }
-        }
-    }
-
-    return response(res,200,'status delete succesfully')
-})
+  return response(res, 200, "status delete succesfully");
+});

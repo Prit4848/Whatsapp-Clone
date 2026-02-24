@@ -5,6 +5,8 @@ import {
   MessageCircle,
   User,
   LogOut,
+  RadioTower,
+  CircleFadingPlus
 } from "lucide-react";
 import { useChatStore } from "../store/useChatStore";
 import Avatar from "./Avatar";
@@ -57,6 +59,16 @@ const ChatSidebar = () => {
 
         <div className="flex items-center gap-1">
           <ThemeToggle />
+
+          {/* Status Button */}
+          <button
+            onClick={() => navigate("/status")}
+            className="p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground"
+            aria-label="Status"
+          >
+            < CircleFadingPlus className="w-5 h-5" />
+          </button>
+
           <button
             onClick={() => setIsCreateChatOpen(true)}
             className="p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground"
@@ -127,6 +139,7 @@ const ChatSidebar = () => {
           </div>
         )}
       </div>
+
       {/* Create Chat Modal */}
       <CreateChatModal
         isOpen={isCreateChatOpen}

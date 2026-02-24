@@ -110,7 +110,7 @@ export const useChatStore = create((set, get) => ({
     // ===============================
     // REACTIONS UPDATE
     // ===============================
-    socket.on("reactions_update", ({ messageId, reactions }) => {
+    socket.on("reaction_update", ({ messageId, reactions }) => {
       set((state) => ({
         messages: state.messages.map((msg) =>
           msg._id === messageId ? { ...msg, reactions } : msg,
@@ -251,21 +251,21 @@ export const useChatStore = create((set, get) => ({
       const createdConversationresponse = response.data.data.conversation;
       console.log(response.data.data.conversation);
 
-      const createdConversation = {
-        _id: createdConversationresponse._id,
-        participants: createdConversationresponse.map((i) =>
-          i === currentUser._id ? "current" : i,
-        ),
-        lastMessage: {
-          content: createdConversationresponse.lastMessage?.content || null,
-          createdAt: createdConversationresponse.lastMessage?.createdAt || null,
-          sender: createdConversationresponse.lastMessage?.sender || null,
-          messageStatus:
-            createdConversationresponse.lastMessage?.messageStatus || null,
-        },
-        createdAt: createdConversationresponse.lastMessage.createdAt,
-        updatedAt: createdConversationresponse.lastMessage.createdAt,
-      };
+     const createdConversation = {
+  _id: createdConversationresponse._id,
+  participants: createdConversationresponse.participants.map((user) =>
+    user._id === currentUser._id ? "current" : user
+  ),
+  lastMessage: {
+    content: createdConversationresponse.lastMessage?.content || null,
+    createdAt: createdConversationresponse.lastMessage?.createdAt || null,
+    sender: createdConversationresponse.lastMessage?.sender || null,
+    messageStatus:
+      createdConversationresponse.lastMessage?.messageStatus || null,
+  },
+  createdAt: createdConversationresponse.createdAt,
+  updatedAt: createdConversationresponse.updatedAt,
+};
 
       set((state) => ({
         chats: [...state.chats, createdConversation],
@@ -313,11 +313,10 @@ export const useChatStore = create((set, get) => ({
   },
 
   setActiveChat: (chatId) => {
-    set({
-      activeChat: chatId,
-      showChatList: false, // always hide sidebar on mobile
-    });
-  },
+  set({
+    activeChat: chatId,
+  });
+},
 
   clearActiveChat: () => {
     set({
@@ -347,8 +346,6 @@ export const useChatStore = create((set, get) => ({
       if (file) {
         formData.append("media", file);
       }
-
-      console.log(formData.entries());
 
       const response = await axiosInstance.post(
         "/message/send-message",
@@ -462,14 +459,14 @@ export const useChatStore = create((set, get) => ({
       toast.error(errorMessage);
     }
   },
-  editMessage: () => {},
   addReactions: (messageId, emoji) => {
     const { socket, authUser } = useAuthStore.getState();
     if (socket && authUser) {
+      console.log("woring");
       socket.emit("add_reactions", {
         messageId,
         emoji,
-        userId: authUser._id,
+        reactionUserId: authUser._id,
       });
     }
   },

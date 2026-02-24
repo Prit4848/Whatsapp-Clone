@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Send, Paperclip, Smile, Mic, X, Image, Video, File } from "lucide-react";
 import { useChatStore } from "../store/useChatStore";
 import toast from "react-hot-toast";
+import EmojiPicker from "emoji-picker-react";
 
 const EMOJI_CATEGORIES = {
   "😊 Smileys": ["😀","😃","😄","😁","😆","😅","😂","🤣","😊","😇","🙂","🙃","😉","😌","😍","🥰","😘","😗","😙","😚","😋","😛","😝","😜","🤪","🤨","🧐","🤓","😎","🥸","🤩","🥳","😏","😒","😞","😔","😟","😕","🙁","☹️","😣","😖","😫","😩","🥺","😢","😭","😤","😠","😡","🤬","🤯","😳","🥵","🥶","😱","😨","😰","😥","😓","🫣","🤗","🫡","🤔","🫠","🤭","🤫","🤥","😶","😑","😬","🙄","😯","😦","😧","😮","😲","🥱","😴","🤤","😪","😵","🫥","🤐","🥴","🤢","🤮","🤧","😷","🤒","🤕"],
@@ -104,44 +105,29 @@ const handleFileChange = (e) => {
 
       {/* Emoji Picker */}
       {showEmojiPicker && (
-        <div
-          ref={emojiPickerRef}
-          className="absolute bottom-full left-0 mb-2 w-[320px] bg-popover border border-border/60 rounded-2xl shadow-xl z-50 overflow-hidden"
-        >
-          {/* Category Tabs */}
-          <div className="flex overflow-x-auto border-b border-border/50 px-1 pt-1 scrollbar-hide gap-0.5">
-            {Object.keys(EMOJI_CATEGORIES).map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`flex-shrink-0 px-2 py-1.5 text-base rounded-t-lg transition-colors ${
-                  activeCategory === cat
-                    ? "bg-muted text-foreground"
-                    : "text-muted-foreground hover:bg-muted/50"
-                }`}
-                title={cat.split(" ").slice(1).join(" ")}
-              >
-                {cat.split(" ")[0]}
-              </button>
-            ))}
-          </div>
+  <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center">
+    
+    {/* Background Blur */}
+    <div
+      className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+      onClick={() => setShowEmojiPicker(false)}
+    />
 
-          {/* Emoji Grid */}
-          <div className="grid grid-cols-8 gap-0.5 p-2 max-h-52 overflow-y-auto">
-            {EMOJI_CATEGORIES[activeCategory].map((emoji) => (
-              <button
-                key={emoji}
-                onClick={() => handleEmojiClick(emoji)}
-                className="text-xl leading-none p-1.5 rounded-lg hover:bg-muted transition-colors hover:scale-110 transform"
-                aria-label={emoji}
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
+    {/* Emoji Picker Container */}
+    <div className="relative z-10 w-full sm:w-auto sm:max-w-[380px] animate-scale-in">
+      <EmojiPicker
+        onEmojiClick={(emojiData) => {
+          handleEmojiClick(emojiData.emoji);
+        }}
+        autoFocusSearch={false}
+        theme="dark"
+        height={400}
+        width={350}
+        previewConfig={{ showPreview: false }}
+      />
+    </div>
+  </div>
+)}
       {/* Input Row */}
       <form
         onSubmit={handleSubmit}
