@@ -10,44 +10,38 @@ const StatusCreatorModal = ({ isOpen, onClose, authUser, onStatusCreated }) => {
   const [mediaFile, setMediaFile] = useState(null);
   const {createStatus} = useStatusStore()
 
-  const handleMediaUpload = (e, type) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setMediaPreview(event.target?.result);
-        setMediaFile(file);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+const handleMediaUpload = (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
 
-  const handleCreateStatus = () => {
-    if (!content.trim() && !mediaFile) {
-      alert("Please add some content to your status");
-      return;
-    }
-     
-    createStatus(content,mediaFile)
-    // const newStatus = {
-    //   id: Date.now().toString(),
-    //   username: authUser?.username,
-    //   profilePicture: authUser?.profilePicture || "",
-    //   lastUpdated: "just now",
-    //   seen: false,
-    //   count: 1,
-    //   content: {
-    //     type: statusType,
-    //     data: statusType === "text" ? content : mediaPreview,
-    //     description: content, // For media, this stores the optional caption
-    //   },
-    // };
+  // Preview
+  const previewUrl = URL.createObjectURL(file);
 
-    // onStatusCreated(newStatus);
-    resetForm();
-    onClose();
-  };
+  setMediaPreview(previewUrl);
+  setMediaFile(file);
+};
 
+const handleCreateStatus = async () => {
+  if (!content?.trim() && !mediaFile) {
+    alert("Please add some content to your status");
+    return;
+  }
+
+  const formData = new FormData();
+
+  if (content?.trim()) {
+    formData.append("content", content.trim());
+  }
+
+  if (mediaFile) {
+    formData.append("media", mediaFile);
+  }
+
+  await createStatus(formData);
+
+  resetForm();
+  onClose();
+};
   const resetForm = () => {
     setStatusType("text");
     setContent("");
@@ -155,7 +149,7 @@ const StatusCreatorModal = ({ isOpen, onClose, authUser, onStatusCreated }) => {
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => handleMediaUpload(e, "image")}
+                    onChange={handleMediaUpload}
                     className="hidden"
                   />
                 </label>
@@ -196,7 +190,7 @@ const StatusCreatorModal = ({ isOpen, onClose, authUser, onStatusCreated }) => {
                   <input
                     type="file"
                     accept="video/*"
-                    onChange={(e) => handleMediaUpload(e, "video")}
+                    onChange={handleMediaUpload}
                     className="hidden"
                   />
                 </label>

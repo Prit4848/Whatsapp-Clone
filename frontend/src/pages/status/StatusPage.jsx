@@ -14,56 +14,17 @@ import StatusCreatorModal from "../../components/Status/StatusCreatorModal";
 import StatusViewer from "../../components/Status/StatusViewer";
 import { useStatusStore } from "../../store/useStatusStore";
 import { formatStatusTime } from "../../utils/helpers";
+import DeleteStatusModal from "../../components/Status/DeleteStatusModal";
 
 // ─── Mock status data ─────────────────────────────────────────────────────────
 const MOCK_MY_STATUS = null;
-
-const MOCK_RECENT_STATUSES = [
-  {
-    id: "1",
-    username: "Alice",
-    profilePicture: "",
-    lastUpdated: "2 min ago",
-    seen: false,
-    count: 3,
-    content: { type: "text", data: "Having a great day! 🎉" },
-  },
-  {
-    id: "2",
-    username: "Bob",
-    profilePicture: "",
-    lastUpdated: "15 min ago",
-    seen: false,
-    count: 1,
-    content: { type: "image", data: "https://via.placeholder.com/500" },
-  },
-  {
-    id: "3",
-    username: "Carol",
-    profilePicture: "",
-    lastUpdated: "1 hr ago",
-    seen: true,
-    count: 2,
-    content: { type: "video", data: "https://via.placeholder.com/500" },
-  },
-  {
-    id: "4",
-    username: "David",
-    profilePicture: "",
-    lastUpdated: "3 hr ago",
-    seen: true,
-    count: 1,
-    content: { type: "text", data: "Check out my new post!" },
-  },
-];
-
 
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 const StatusPage = () => {
   const navigate = useNavigate();
   const { authUser } = useAuthStore();
-  const { statuses, myStatuses } = useStatusStore();
-  const [isOwn, setisOwn] = useState(false)
+  const { statuses, myStatuses, deleteStatus } = useStatusStore();
+  const [isOwn, setisOwn] = useState(false);
   const STORY_DURATION = 5000;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [myStatus, setMyStatus] = useState(MOCK_MY_STATUS);
@@ -75,6 +36,8 @@ const StatusPage = () => {
 
   const recentUnseen = recentStatuses.filter((s) => !s.seen);
   const recentSeen = recentStatuses.filter((s) => s.seen);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const handleAddStatus = () => setIsModalOpen(true);
 
@@ -91,6 +54,11 @@ const StatusPage = () => {
   };
   const handleDeleteMyStatus = () => setMyStatus(null);
 
+  const hasMyStatus =
+    Array.isArray(myStatus) &&
+    myStatus.length > 0 &&
+    myStatus[0]?.content?.length > 0;
+
   const handleViewStatus = (status) => {
     setSelectedStatus({
       ...status,
@@ -99,11 +67,12 @@ const StatusPage = () => {
 
     setMobilePanel("right");
   };
+  console.log(myStatus);
 
   const handleViewMyStatus = () => {
     if (myStatuses) {
       setSelectedStatus(myStatuses[0]);
-      setisOwn(true)
+      setisOwn(true);
       setMobilePanel("right");
     }
   };
@@ -116,7 +85,15 @@ const StatusPage = () => {
         authUser={authUser}
         onStatusCreated={handleStatusCreated}
       />
-
+      {showDeleteModal && (
+        <DeleteStatusModal
+          status={myStatus}
+          onClose={() => setShowDeleteModal(false)}
+          onDelete={(storyId) => {
+            deleteStatus(storyId); // call API
+          }}
+        />
+      )}
       {/* ══════════════════════════════════════════════
           LEFT PANEL — My status + contact list
       ══════════════════════════════════════════════ */}
@@ -143,17 +120,17 @@ const StatusPage = () => {
           {/* ── My Status (WhatsApp Style) ──────────────────────────── */}
           <div className="px-4 pt-3 pb-2 border-b border-border/40">
             <button
-              onClick={myStatus ? handleViewMyStatus : handleAddStatus}
+              onClick={hasMyStatus ? handleViewMyStatus : handleAddStatus}
               className="w-full flex items-center gap-4 py-3 text-left hover:bg-muted/40 rounded-xl transition"
             >
               {/* Avatar Section */}
               <div className="relative w-[52px] h-[52px] flex items-center justify-center">
-                {/* Status Ring */}
-                {myStatus && (
+                {/* Status Ring (only if status exists) */}
+                {hasMyStatus && (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <StatusRing
                       seen={false}
-                      count={myStatus.content?.length || 1}
+                      count={myStatus[0].content.length}
                       size={52}
                     />
                   </div>
@@ -174,13 +151,20 @@ const StatusPage = () => {
                   )}
                 </div>
 
-                {/* Add Badge */}
-                {!myStatus && (
-                  <div className="absolute bottom-0 right-0 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center border-2 border-background z-20">
+                {/* Add Badge (only if NO status) */}
+                {!hasMyStatus && (
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddStatus();
+                    }}
+                    className="absolute bottom-0 right-0 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center border-2 border-background z-20 cursor-pointer"
+                  >
                     <Plus className="w-3.5 h-3.5 text-white" />
                   </div>
                 )}
               </div>
+
               {/* Text Section */}
               <div className="flex-1 min-w-0">
                 <p className="text-[15px] font-semibold text-foreground">
@@ -188,30 +172,43 @@ const StatusPage = () => {
                 </p>
 
                 <p className="text-sm text-muted-foreground truncate">
-                  {myStatus
+                  {hasMyStatus
                     ? formatStatusTime(
-                        myStatus.content?.[myStatus.content.length - 1]
+                        myStatus[0].content[myStatus[0].content.length - 1]
                           ?.createdAt,
                       )
                     : "Tap to add status update"}
                 </p>
               </div>
 
-              {/* Optional Add Button When Status Exists */}
-              {myStatus && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleAddStatus();
-                  }}
-                  className="w-9 h-9 rounded-full hover:bg-muted flex items-center justify-center transition"
-                >
-                  <Plus className="w-5 h-5 text-muted-foreground" />
-                </button>
+              {/* Add & Delete buttons (only if status exists) */}
+              {hasMyStatus && (
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddStatus();
+                    }}
+                    className="w-9 h-9 rounded-full hover:bg-muted flex items-center justify-center transition"
+                  >
+                    <Plus className="w-5 h-5 text-muted-foreground" />
+                  </button>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowDeleteModal(true);
+                    }}
+                    className="w-9 h-9 rounded-full hover:bg-muted flex items-center justify-center transition"
+                  >
+                    <Trash2 className="w-5 h-5 text-muted-foreground" />
+                  </button>
+                </div>
               )}
             </button>
           </div>
 
+          <div className="border-t border-border mx-4 my-2" />
           <div className="border-t border-border mx-4 my-2" />
 
           {/* ── Recent Updates ──────────────────────── */}
@@ -232,8 +229,11 @@ const StatusPage = () => {
                     <StatusAvatar
                       src={status.profilePicture}
                       alt={status.username}
-                      seen={false}
-                      count={status.count}
+                      seen={status.seen}
+                      count={status.content.length}
+                      size={42}
+                      duration={STORY_DURATION}
+                      currentIndex={currentIndex}
                     />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground">
@@ -328,7 +328,7 @@ const StatusPage = () => {
           status={selectedStatus}
           onClose={() => {
             setSelectedStatus(null);
-            setisOwn(false)
+            setisOwn(false);
             setMobilePanel("left");
           }}
           isOwnStatus={isOwn}

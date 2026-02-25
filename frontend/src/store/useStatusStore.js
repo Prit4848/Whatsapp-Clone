@@ -13,8 +13,78 @@ export const useStatusStore = create((set, get) => ({
   isLoading: false,
   error: null,
 
-  // ───── ACTIONS ─────
+  initializeStatusSockets: () => {
+    const { socket, authUser } = useAuthStore.getState();
+    if (!socket || !authUser) return;
 
+    socket.off("new_status");
+
+    socket.on("new_status", (newStatus) => {
+      console.log("new Status");
+
+      set((state) => {
+        const formattedStatus = {
+          userId: newStatus.user._id,
+          username: newStatus.user.username,
+          profilePicture: newStatus.user.profilePicture,
+          lastUpdated: newStatus.createdAt,
+          seen: false,
+          count: 1,
+          content: [
+            {
+              id: newStatus._id,
+              type: newStatus.contentType,
+              data: newStatus.content,
+              statusUrl: newStatus.statusUrl || null,
+              createdAt: newStatus.createdAt,
+              seen: false,
+              viewers: [],
+            },
+          ],
+        };
+
+        const existingIndex = state.statuses.findIndex(
+          (s) => s.userId === formattedStatus.userId,
+        );
+
+        // ✅ If user already exists
+        if (existingIndex !== -1) {
+          const updated = [...state.statuses];
+
+          updated[existingIndex] = {
+            ...updated[existingIndex],
+            content: [
+              formattedStatus.content[0],
+              ...updated[existingIndex].content,
+            ],
+            count: updated[existingIndex].count + 1,
+            lastUpdated: formattedStatus.lastUpdated,
+            seen: false,
+          };
+
+          // 🔥 Move updated user to top (WhatsApp behavior)
+          const updatedUser = updated.splice(existingIndex, 1)[0];
+          updated.unshift(updatedUser);
+
+          return { statuses: updated };
+        }
+
+        // ✅ If new user
+        return {
+          statuses: [formattedStatus, ...state.statuses],
+        };
+      });
+    });
+
+    socket.on("delete_status",(statusId)=>{
+      set((state)=>({
+        statuses:state.statuses.map((status)=>({
+          ...status,
+          content: status.content.filter((s) => s.id !== statusId),
+        }))
+      }))
+    })
+  },
   // Fetch all statuses
   fetchStatuses: async () => {
     try {
@@ -46,6 +116,7 @@ export const useStatusStore = create((set, get) => ({
           type: status.contentType,
           data: status.content,
           createdAt: status.createdAt,
+          statusUrl:status.statusUrl,
           seen: status.viewer?.includes(currentUserId),
         });
 
@@ -78,8 +149,8 @@ export const useStatusStore = create((set, get) => ({
       const res = await axiosInstance.get("/status/me");
 
       const grouped = {};
-       console.log( res.data.data);
-       
+      console.log(res.data.data);
+
       res.data.data.forEach((status) => {
         const userId = status.user?._id;
 
@@ -101,6 +172,7 @@ export const useStatusStore = create((set, get) => ({
           type: status.contentType,
           data: status.content,
           createdAt: status.createdAt,
+          statusUrl: status.statusUrl,
           seen: status.viewer?.includes(currentUserId),
           viewers:
             status.viewer?.map((v) => ({
@@ -120,7 +192,7 @@ export const useStatusStore = create((set, get) => ({
           grouped[userId].lastUpdated = status.updatedAt;
         }
       });
-      const mystatus = Object.values(grouped)
+      const mystatus = Object.values(grouped);
       set({ myStatuses: mystatus });
     } catch (err) {
       set({ error: err.message });
@@ -128,30 +200,63 @@ export const useStatusStore = create((set, get) => ({
   },
 
   // Create status
-  createStatus: async (data, file) => {
+  createStatus: async (formData) => {
     try {
-      console.log(data);
-      const fortdata = new FormData();
-      if (file) {
-        fortdata.append("media", file);
-      }
-
-      const res = await axiosInstance.post(
-        "/status/",
-        { content: data, fortdata },
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+      const res = await axiosInstance.post("/status/", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
         },
-      );
+      });
 
-      set((state) => ({
-        statuses: [res.data, ...state.statuses],
-        myStatuses: [res.data, ...state.myStatuses],
-      }));
+      const apiData = res.data.data;
+
+      set((state) => {
+        const formattedStatus = {
+          userId: apiData.user._id,
+          username: apiData.user.username,
+          profilePicture: apiData.user.profilePicture,
+          lastUpdated: apiData.createdAt,
+          seen: false,
+          count: 1,
+          content: [
+            {
+              id: apiData._id,
+              type: apiData.contentType,
+              data: apiData.content,
+              createdAt: apiData.createdAt,
+              statusUrl: apiData.statusUrl,
+              seen: false,
+              viewers: [],
+            },
+          ],
+        };
+
+        const existingIndex = state.myStatuses.findIndex(
+          (s) => s.userId === formattedStatus.userId,
+        );
+
+        if (existingIndex !== -1) {
+          const updated = [...state.myStatuses];
+
+          updated[existingIndex] = {
+            ...updated[existingIndex],
+            content: [
+              formattedStatus.content[0],
+              ...updated[existingIndex].content,
+            ],
+            count: updated[existingIndex].count + 1,
+            lastUpdated: formattedStatus.lastUpdated,
+          };
+
+          return { myStatuses: updated };
+        }
+
+        return {
+          myStatuses: [formattedStatus, ...state.myStatuses],
+        };
+      });
     } catch (err) {
-      const errorMessage = err.response.data.message || err.message;
+      const errorMessage = err.response?.data?.message || err.message;
       set({ error: errorMessage });
     }
   },
@@ -159,11 +264,13 @@ export const useStatusStore = create((set, get) => ({
   // Delete status
   deleteStatus: async (statusId) => {
     try {
-      await axios.delete(`/api/status/${statusId}`);
+      await axiosInstance.delete(`/status/${statusId}/delete`);
 
       set((state) => ({
-        statuses: state.statuses.filter((s) => s._id !== statusId),
-        myStatuses: state.myStatuses.filter((s) => s._id !== statusId),
+        myStatuses: state.myStatuses.map((status) => ({
+          ...status,
+          content: status.content.filter((s) => s.id !== statusId),
+        })),
       }));
     } catch (err) {
       set({ error: err.message });
@@ -174,7 +281,7 @@ export const useStatusStore = create((set, get) => ({
   markAsViewed: async (statusId) => {
     try {
       await axiosInstance.get(`/status/${statusId}/view`);
-      
+
       // set((state) => ({
       //   statuses: state.statuses.map((status) =>
       //     status._id === statusId

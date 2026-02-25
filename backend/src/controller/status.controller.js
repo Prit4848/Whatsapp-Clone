@@ -26,12 +26,14 @@ export const createStatus = asyncHandler(async (req, res) => {
 
     statusUrl = uploadFile.secure_url;
 
-    if (file.mimeType.startsWith("video")) {
+    const mimeType = file.mimetype || file.mimeType || "";
+
+    if (mimeType.startsWith("video")) {
       initialContentType = "video";
-    } else if (file.mimeType.startsWith("image")) {
+    } else if (mimeType.startsWith("image")) {
       initialContentType = "image";
     } else {
-      return response(res, "400", "Unsupported File Type");
+      return response(res, 400, "Unsupported File Type");
     }
   } else if (content) {
     initialContentType = "text";
@@ -45,7 +47,8 @@ export const createStatus = asyncHandler(async (req, res) => {
     user,
     contentType: initialContentType,
     expiredAt: expiry,
-    content: content ? content : statusUrl,
+    content: content ,
+    statusUrl: statusUrl ? statusUrl : ""
   });
   console.log(status);
 
@@ -55,9 +58,13 @@ export const createStatus = asyncHandler(async (req, res) => {
     .populate("user", "username profilePicture")
     .populate("viewer", "username profilePicture");
 
-  if (req.io && req.soketUserMap) {
-    for (const [connectedUserId, socketId] of req.soketUserMap) {
-      if (connectedUserId !== userId) {
+    console.log(req.socketUserMap);
+    
+  if (req.io && req.socketUserMap) {
+    for (const [connectedUserId, socketId] of req.socketUserMap) {
+      console.log("working");
+      
+      if (connectedUserId !== userId.toString()) {
         req.io.to(socketId).emit("new_status", populateStatus);
       }
     }
@@ -104,10 +111,10 @@ export const viewStatus = asyncHandler(async (req, res) => {
 
     updatedStatus = await Status.findById(userId)
       .populate("user", "username profilePicture _id")
-      .populate("viewer", "username profilePicture _id");
+      .populate("viewer", "username profilePicture _id").sort({createdAt:1});
 
-    if (req.io && req.soketUserMap) {
-      const statusOwnerSocketId = req.soketUserMap.get(
+    if (req.io && req.socketUserMap) {
+      const statusOwnerSocketId = req.socketUserMap.get(
         status.user._id.toString(),
       );
       if (statusOwnerSocketId) {
@@ -143,9 +150,9 @@ export const deleteStatus = asyncHandler(async (req, res) => {
 
   await status.deleteOne();
 
-  if (req.io && req.soketUserMap) {
-    for (const [connectedUserId, socketId] of req.soketUserMap) {
-      if (connectedUserId !== userId) {
+  if (req.io && req.socketUserMap) {
+    for (const [connectedUserId, socketId] of req.socketUserMap) {
+      if (connectedUserId !== userId.toString()) {
         req.io.to(socketId).emit("delete_status", status._id);
       }
     }

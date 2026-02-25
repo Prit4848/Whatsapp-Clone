@@ -5,6 +5,7 @@ const statusSchema = new mongoose.Schema(
     user: { type: mongoose.Schema.Types.ObjectId, ref: "user" },
     content: { type: String, required: true },
     contentType: { type: String, enum: ["text", "image", "video"] },
+    statusUrl:{type:String},
     viewer:[{ type: mongoose.Schema.Types.ObjectId, ref: "user" }],
     expiredAt: { type: Date, required: true },
   },

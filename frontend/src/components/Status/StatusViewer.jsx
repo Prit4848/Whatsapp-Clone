@@ -69,30 +69,58 @@ const StatusViewer = ({ status, onClose, isOwnStatus }) => {
   };
 
   const renderContent = () => {
-    switch (currentStory?.type) {
-      case "image":
-        return (
-          <img
-            src={currentStory.data}
-            alt=""
-            className="max-h-full max-w-full object-contain"
-          />
-        );
-      case "video":
-        return (
-          <video
-            src={currentStory.data}
-            className="max-h-full max-w-full object-contain"
-            autoPlay
-          />
-        );
-      default:
-        return (
-          <p className="text-2xl font-bold text-white text-center">
-            {currentStory?.data}
-          </p>
-        );
-    }
+    if (!currentStory) return null;
+
+    const isImage = currentStory.type === "image";
+    const isVideo = currentStory.type === "video";
+    const isText = currentStory.type === "text";
+    const isMedia = isImage || isVideo;
+
+    return (
+      <div className="absolute inset-0 overflow-hidden">
+        {/* ✅ MEDIA STORIES */}
+        {isMedia && (
+          <div className="relative w-full h-full bg-black flex items-center justify-center">
+            {isImage && (
+              <img
+                src={currentStory.statusUrl}
+                alt=""
+                className="max-w-full max-h-full object-contain"
+              />
+            )}
+
+            {isVideo && (
+              <video
+                src={currentStory.statusUrl}
+                className="max-w-full max-h-full object-contain"
+                autoPlay
+                muted
+                playsInline
+              />
+            )}
+
+            {/* Caption for media */}
+            {currentStory?.data && (
+              <>
+                <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-black/80 to-transparent" />
+                <div className="absolute bottom-6 left-4 right-4 text-white text-center text-[16px]">
+                  {currentStory.data}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ✅ TEXT STORY (WhatsApp Style) */}
+        {isText && (
+          <div className="w-full h-full flex items-center justify-center px-10 bg-[#1f2c34]">
+            <p className="text-white text-3xl font-semibold text-center leading-relaxed break-words">
+              {currentStory.data}
+            </p>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
