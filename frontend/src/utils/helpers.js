@@ -48,3 +48,37 @@ export const truncateText = (text, maxLength = 50) => {
 export const generateId = () => {
   return `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 };
+
+export const formatStatusTime = (timestamp) => {
+  if (!timestamp) return "";
+
+  const date = new Date(timestamp);
+  const now = new Date();
+
+  const diffInSeconds = Math.floor((now - date) / 1000);
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  const diffInHours = Math.floor(diffInMinutes / 60);
+
+  // Just now
+  if (diffInSeconds < 60) {
+    return "Just now";
+  }
+
+  // Minutes ago
+  if (diffInMinutes < 60) {
+    return `${diffInMinutes} min${diffInMinutes > 1 ? "s" : ""} ago`;
+  }
+
+  // Hours ago (today)
+  if (diffInHours < 24 && isToday(date)) {
+    return `${diffInHours} hr${diffInHours > 1 ? "s" : ""} ago`;
+  }
+
+  // Yesterday
+  if (isYesterday(date)) {
+    return `Yesterday at ${format(date, "h:mm a")}`;
+  }
+
+  // Older
+  return format(date, "dd MMM yyyy, h:mm a");
+};

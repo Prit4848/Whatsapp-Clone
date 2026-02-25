@@ -13,7 +13,7 @@ const App = () => {
 
   const {checkAuth,isCheckingAuth,authUser,connectSocket,disconnectSocket,socket} = useAuthStore()  
   const {setAllChats,activeChat,setMessage,initializeSocketListeners,isCreateChat} = useChatStore()
-  const {fetchStatuses}  = useStatusStore()
+  const {fetchStatuses,fetchMyStatuses}  = useStatusStore()
   
   useEffect(() => {
     if (!isCheckingAuth) return;
@@ -33,6 +33,7 @@ const App = () => {
     if (authUser) {
       connectSocket();
       fetchStatuses()
+      fetchMyStatuses()
     }
 
     return () => {

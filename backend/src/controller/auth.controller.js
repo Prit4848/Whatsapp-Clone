@@ -80,7 +80,7 @@ export const verifyOtp = asyncHandler(async (req, res) => {
       httpOnly: true,
       secure: false,
       sameSite: "Lax",
-      maxAge: 24 * 60 * 60 * 360
+      maxAge: 365 * 24 * 60 * 60 *1000
     });
   return response(res,200,"Verify Otp Successfully",{ token, user });
 });
@@ -90,7 +90,7 @@ export const logout = asyncHandler(async (req,res)=>{
       httpOnly: true,
       secure: false,
       sameSite: "Lax",
-      maxAge: 24 * 60 * 60 * 360
+      maxAge: 365 * 24 * 60 * 60 *1000
     })
   response(res,200,"User logout successfully!")
 })

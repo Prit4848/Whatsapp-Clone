@@ -124,6 +124,14 @@
   animation: scaleIn 0.18s ease-out;
 }
 
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
 /* ===== IMPROVED LIGHT MODE (Clean WhatsApp Web Style) ===== */
 :root {
   /* App background - softer neutral */

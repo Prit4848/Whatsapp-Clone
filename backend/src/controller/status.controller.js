@@ -67,7 +67,18 @@ export const createStatus = asyncHandler(async (req, res) => {
 });
 
 export const getStatus = asyncHandler(async (req, res) => {
-  const status = await Status.find({ expiredAt: { $gt: new Date() } })
+  const userId = req.user._id
+  const status = await Status.find({ expiredAt: { $gt: new Date() }, user: { $ne: userId }, })
+    .populate("user", "username profilePicture _id")
+    .populate("viewer", "username profilePicture _id")
+    .sort({ createdAt: -1 });
+
+  return response(res, 200, "get status Succesfully", status);
+});
+
+export const getMyStatus = asyncHandler(async (req, res) => {
+  const userId = req.user._id
+  const status = await Status.find({ expiredAt: { $gt: new Date() }, user: userId , })
     .populate("user", "username profilePicture _id")
     .populate("viewer", "username profilePicture _id")
     .sort({ createdAt: -1 });
