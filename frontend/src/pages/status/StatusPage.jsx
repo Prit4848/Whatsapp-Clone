@@ -209,7 +209,6 @@ const StatusPage = () => {
           </div>
 
           <div className="border-t border-border mx-4 my-2" />
-          <div className="border-t border-border mx-4 my-2" />
 
           {/* ── Recent Updates ──────────────────────── */}
           {recentUnseen.length > 0 && (
