@@ -29,7 +29,7 @@ import initializeSocket from "./src/service/socketService.js";
 //   }),
 // );
 
-app.use(cors({ origin: 'https://whatsapp-clone-frontend-gamma.vercel.app', credentials: true }));
+app.use(cors({ origin: '', credentials: true }));
 
 // app.use(limit)
 app.use((req,res,next)=>{
