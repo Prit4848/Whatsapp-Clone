@@ -53,6 +53,9 @@ dbconnect();
 
 //routes
 app.use("/api/v1",indexRouter);
+app.get("/",(req,res)=>{
+  res.json({res,message:"backend server started"})
+})
 
 
 server.listen(port, () => {
