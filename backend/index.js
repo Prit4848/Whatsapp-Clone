@@ -22,12 +22,15 @@ import indexRouter from './src/routes/index.routes.js'
 import initializeSocket from "./src/service/socketService.js";
 
 //middleware
-app.use(
-  cors({
-    origin:[process.env.FRONTEND_URL,process.env.FRONTEND_URL1] ,
-    credentials:true
-  }),
-);
+// app.use(
+//   cors({
+//     origin:[process.env.FRONTEND_URL,process.env.FRONTEND_URL1] ,
+//     credentials:true
+//   }),
+// );
+
+app.use(cors({ origin: true, credentials: true }));
+
 // app.use(limit)
 app.use((req,res,next)=>{
     console.log(req.body);

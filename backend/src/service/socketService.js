@@ -9,7 +9,7 @@ const typingUsers = new Map();
 const initializeSocket = (server) => {
   const io = new Server(server, {
     cors: {
-      origin: [process.env.FRONTEND_URL, process.env.FRONTEND_URL1],
+      origin: "https://whatsapp-clone-frontend-gamma.vercel.app",
       credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     },
