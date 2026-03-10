@@ -27,7 +27,7 @@ import initializeSocket from "./src/service/socketService.js";
 
 app.use(
   cors({
-    origin: true,
+    origin:["https://whatsapp-clone-frontend-gamma.vercel.app","http://localhost:5173"],
     credentials: true,
   }),
 );
