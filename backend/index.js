@@ -24,21 +24,10 @@ const limit = ratelimit({
 import indexRouter from './src/routes/index.routes.js'
 import initializeSocket from "./src/service/socketService.js";
 
-//middleware
-const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  process.env.FRONTEND_URL1,
-].filter(Boolean);
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true); // allow non-browser clients
-      if (allowedOrigins.length === 0) return callback(null, true);
-      return allowedOrigins.includes(origin)
-        ? callback(null, true)
-        : callback(new Error("Not allowed by CORS"));
-    },
+    origin: true,
     credentials: true,
   })
 );
