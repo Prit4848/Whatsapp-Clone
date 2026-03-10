@@ -27,7 +27,7 @@ import initializeSocket from "./src/service/socketService.js";
 
 app.use(
   cors({
-    origin: [process.env.FRONTEND_URL, process.env.FRONTEND_URL1],
+    origin: true,
     credentials: true,
   }),
 );

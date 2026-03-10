@@ -79,8 +79,8 @@ export const verifyOtp = asyncHandler(async (req, res) => {
   const isProd = process.env.NODE_ENV === "production";
   res.cookie("token", token, {
       httpOnly: true,
-      secure: isProd,
-      sameSite: isProd ? "None" : "Lax",
+      secure: true,
+      sameSite: 'None',
       maxAge: 365 * 24 * 60 * 60 *1000
     });
   return response(res,200,"Verify Otp Successfully",{ token, user });
