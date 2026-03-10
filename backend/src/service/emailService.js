@@ -6,8 +6,11 @@ const transporter = nodemailer.createTransport({
     secure: true, 
     auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    }
+        pass: process.env.EMAIL_PASS 
+    },
+    connectionTimeout: 50000, 
+    greetingTimeout: 50000,
+    socketTimeout: 50000,
 });
 
 transporter.verify((error,success)=>{
