@@ -9,10 +9,14 @@ const typingUsers = new Map();
 const initializeSocket = (server) => {
   const io = new Server(server, {
     cors: {
-      origin:"*",
+      origin: (origin, callback) => {
+        if (!origin || origin) {
+          callback(null, true);
+        }
+      },
       credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    }
+    },
   });
 
   io.on("connection", (socket) => {
@@ -136,67 +140,64 @@ const initializeSocket = (server) => {
 
     socket.on("add_reactions", async ({ messageId, emoji, reactionUserId }) => {
       try {
+        const message = await Message.findOne({
+          _id: messageId,
+          "reactions.user": reactionUserId,
+        });
 
-    const message = await Message.findOne({
-      _id: messageId,
-      "reactions.user": reactionUserId,
-    });
+        if (message) {
+          const existingReaction = message.reactions.find(
+            (r) => r.user.toString() === reactionUserId.toString(),
+          );
+          console.log(existingReaction);
 
-    if (message) {
-      const existingReaction = message.reactions.find(
-        (r) => r.user.toString() === reactionUserId.toString()
-      );
-     console.log(existingReaction);
-     
-      if (existingReaction.emoji === emoji) {
-        // Remove reaction (toggle off)
-        await Message.updateOne(
-          { _id: messageId },
-          { $pull: { reactions: { user: reactionUserId } } }
+          if (existingReaction.emoji === emoji) {
+            // Remove reaction (toggle off)
+            await Message.updateOne(
+              { _id: messageId },
+              { $pull: { reactions: { user: reactionUserId } } },
+            );
+          } else {
+            // Replace emoji
+            await Message.updateOne(
+              { _id: messageId, "reactions.user": reactionUserId },
+              { $set: { "reactions.$.emoji": emoji } },
+            );
+          }
+        } else {
+          // Add new reaction
+          await Message.updateOne(
+            { _id: messageId },
+            { $push: { reactions: { user: reactionUserId, emoji } } },
+          );
+        }
+
+        const updatedMessage = await Message.findById(messageId)
+          .populate("sender", "username profilePicture _id")
+          .populate("receiver", "username profilePicture _id")
+          .populate("reactions.user", "username");
+
+        const reactionUpdated = {
+          messageId,
+          reactions: updatedMessage.reactions,
+        };
+
+        const senderSocket = OnlineUsers.get(
+          updatedMessage.sender._id.toString(),
         );
-      } else {
-        // Replace emoji
-        await Message.updateOne(
-          { _id: messageId, "reactions.user": reactionUserId },
-          { $set: { "reactions.$.emoji": emoji } }
+
+        const receiverSocket = OnlineUsers.get(
+          updatedMessage.receiver._id.toString(),
         );
+
+        if (senderSocket)
+          io.to(senderSocket).emit("reaction_update", reactionUpdated);
+
+        if (receiverSocket)
+          io.to(receiverSocket).emit("reaction_update", reactionUpdated);
+      } catch (error) {
+        console.log("Error handle reactions", error.message);
       }
-
-    } else {
-      // Add new reaction
-      await Message.updateOne(
-        { _id: messageId },
-        { $push: { reactions: { user: reactionUserId, emoji } } }
-      );
-    }
-
-    const updatedMessage = await Message.findById(messageId)
-      .populate("sender", "username profilePicture _id")
-      .populate("receiver", "username profilePicture _id")
-      .populate("reactions.user", "username");
-
-    const reactionUpdated = {
-      messageId,
-      reactions: updatedMessage.reactions,
-    };
-
-    const senderSocket = OnlineUsers.get(
-      updatedMessage.sender._id.toString()
-    );
-
-    const receiverSocket = OnlineUsers.get(
-      updatedMessage.receiver._id.toString()
-    );
-
-    if (senderSocket)
-      io.to(senderSocket).emit("reaction_update", reactionUpdated);
-
-    if (receiverSocket)
-      io.to(receiverSocket).emit("reaction_update", reactionUpdated);
-
-  } catch (error) {
-    console.log("Error handle reactions", error.message);
-  }
     });
 
     const handleDisconected = async () => {
