@@ -12,8 +12,7 @@ const initializeSocket = (server) => {
       origin:"*",
       credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    },
-    pingTimeout: 60000, //DISCONETCT INTERVAL OF USER AFTER 60s
+    }
   });
 
   io.on("connection", (socket) => {
