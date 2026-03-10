@@ -9,11 +9,10 @@ const typingUsers = new Map();
 const initializeSocket = (server) => {
   const io = new Server(server, {
     cors: {
-      origin: (origin, callback) => {
-        if (!origin || origin) {
-          callback(null, true);
-        }
-      },
+      origin:[
+      "https://whatsapp-clone-1-lddk.onrender.com",
+      "http://localhost:5173"
+    ] ,
       credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     },
