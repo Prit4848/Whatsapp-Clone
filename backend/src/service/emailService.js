@@ -1,61 +1,34 @@
-import nodemailer from 'nodemailer'
+import { Resend } from 'resend';
 
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, 
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS 
-    },
-    connectionTimeout: 50000, 
-    greetingTimeout: 50000,
-    socketTimeout: 50000,
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-transporter.verify((error,success)=>{
-  if(error){
-    console.log('Email service connection Failed');
-  }else{
-    console.log('email configure Properly Now you can send Email');
-  }
-})
+const sendEmail = async ({ email, otp }) => {
+    try {
+        const { data, error } = await resend.emails.send({
+            from: 'WhatsApp Security <onboarding@resend.dev>',
+            to: email.trim(),
+            subject: 'Your WhatsApp verification code',
+            html: `
+                <div style="font-family: Arial, sans-serif; color: #333;">
+                  <h2 style="color: #075e54;">🔐 Verification Code</h2>
+                  <p>Your OTP is:</p>
+                  <h1 style="background: #e0f7fa; display: inline-block; padding: 10px;">${otp}</h1>
+                  <p>Valid for 5 minutes.</p>
+                </div>
+            `,
+        });
 
-const sendEmail = async ({email,otp})=>{
-     if (!email || !email.trim()) {
-        throw new Error('Invalid email address');
+        if (error) {
+            console.error("Resend Error:", error);
+            throw new Error(error.message);
+        }
+
+        return data;
+    } catch (err) {
+        console.error("Email failed:", err.message);
+        throw err;
     }
-    const html = `
-    <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-      <h2 style="color: #075e54;">🔐 WhatsApp Web Verification</h2>
-      
-      <p>Hi there,</p>
-      
-      <p>Your one-time password (OTP) to verify your WhatsApp Web account is:</p>
-      
-      <h1 style="background: #e0f7fa; color: #000; padding: 10px 20px; display: inline-block; border-radius: 5px; letter-spacing: 2px;">
-        ${otp}
-      </h1>
+};
 
-      <p><strong>This OTP is valid for the next 5 minutes.</strong> Please do not share this code with anyone.</p>
-
-      <p>If you didn’t request this OTP, please ignore this email.</p>
-
-      <p style="margin-top: 20px;">Thanks & Regards,<br/>WhatsApp Web Security Team</p>
-
-      <hr style="margin: 30px 0;" />
-
-      <small style="color: #777;">This is an automated message. Please do not reply.</small>
-    </div>
-  `;
-
-   await transporter.sendMail({
-     from: process.env.EMAIL_USER,
-     to: email.trim(), // must be valid
-     subject: "Your WhatsApp verification code",
-     html,
-   });
-
-}
 
 export {sendEmail}
