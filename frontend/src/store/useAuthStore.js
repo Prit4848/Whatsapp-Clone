@@ -145,6 +145,7 @@ export const useAuthStore = create((set, get) => ({
   if (!authUser || socket?.connected) return;
 
   const newSocket = io(BASE_URL, {
+    transports: ["websocket"],
     withCredentials: true,
   });
 
