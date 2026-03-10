@@ -30,7 +30,7 @@ app.set("trust proxy", 1);
 app.use(
   cors({
     origin: [
-      "https://whatsapp-clone-frontend-gamma.vercel.app",
+      "https://whatsapp-clone-1-lddk.onrender.com",
       "http://localhost:5173"
     ],
     credentials: true
