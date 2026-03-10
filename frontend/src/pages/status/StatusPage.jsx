@@ -78,7 +78,7 @@ const StatusPage = () => {
   };
 
   return (
-    <div className="flex h-screen bg-sidebar">
+    <div className="flex h-[100dvh] bg-sidebar">
       <StatusCreatorModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -100,7 +100,7 @@ const StatusPage = () => {
       <div
         className={`
           flex flex-col border-r border-sidebar-border
-          w-full md:w-[340px] lg:w-[380px] flex-shrink-0
+          w-full md:w-[340px] lg:w-[380px] flex-shrink-0 min-h-0
           ${mobilePanel === "right" ? "hidden md:flex" : "flex"}
         `}
       >

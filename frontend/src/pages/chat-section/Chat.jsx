@@ -25,7 +25,7 @@ const Chat = () => {
 }, [setMobileView]);
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-background">
+    <div className="flex h-[100dvh] w-full overflow-hidden bg-background">
   
   {/* Sidebar */}
   <div
@@ -33,7 +33,7 @@ const Chat = () => {
       ${isMobileView 
         ? activeChat ? "hidden" : "w-full" 
         : "w-[350px] lg:w-[400px]"}
-      h-full flex-shrink-0
+      h-full flex-shrink-0 min-h-0
     `}
   >
     <ChatSidebar />
@@ -45,7 +45,7 @@ const Chat = () => {
       ${isMobileView 
         ? activeChat ? "w-full" : "hidden"
         : "flex-1"}
-      h-full
+      h-full min-h-0
     `}
   >
     <ChatWindow />
