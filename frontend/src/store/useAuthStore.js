@@ -3,9 +3,8 @@ import  axiosInstance  from "../services/axiosInstance";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 
-const BASE_URL = "https://whatsapp-clone-c57y.onrender.com";
-
-console.log("BASE_URL",BASE_URL);
+// const BASE_URL = "https://whatsapp-clone-c57y.onrender.com";
+const BASE_URL = "http://localhost:4000";
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,
