@@ -5,7 +5,7 @@ import { response } from '../utils/responseHandler.js'
 const authUser = async (req, res, next) => {
   try {
     const token = req.cookies?.token;
-    console.log(token);
+    console.log(req);
     
     if (!token) {
       return response(res, 401, "Unauthorized: No token provided");

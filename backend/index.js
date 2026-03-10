@@ -44,10 +44,7 @@ app.use(
 );
 
 // app.use(limit)
-app.use((req,res,next)=>{
-    console.log(req.body);
-    next()
-})
+
 app.use(morgan('dev'))
 app.use(express.json()); // parse body data
 app.use(cookieParser()); // parse token every requiest
