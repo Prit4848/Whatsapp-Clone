@@ -5,7 +5,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const sendEmail = async ({ email, otp }) => {
     try {
         const { data, error } = await resend.emails.send({
-            from: 'WhatsApp Security <onboarding@resend.dev>',
+            from: process.env.EMAIL_USER,
             to: email.trim(),
             subject: 'Your WhatsApp verification code',
             html: `
