@@ -2,20 +2,28 @@ import jwt from 'jsonwebtoken'
 import User from "../models/User.js"
 import { response } from '../utils/responseHandler.js'
 
-const authUser = async (req,res,next)=>{
-  const token = req.cookies?.token
-  if(!token){
-    return response(res,400,"Unauthorized request")
-  }
+const authUser = async (req, res, next) => {
   try {
-    const decoded = jwt.verify(token,process.env.JWT_SECRED)
-    const user = await User.findOne({_id:decoded.id}).select("-password")
+    const token = req.cookies?.token;
+    console.log(token);
+    
+    if (!token) {
+      return response(res, 401, "Unauthorized: No token provided");
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET); // Note: Fix typo "SECRED" -> "SECRET"
+    const user = await User.findById(decoded.id).select("-password");
+
+    if (!user) {
+      return response(res, 401, "Unauthorized: User no longer exists");
+    }
 
     req.user = user;
-    next()
+    next();
   } catch (error) {
-    return response(res,500,`${error.message}`)
+    
+    const message = error.name === "TokenExpiredError" ? "Session expired" : "Invalid token";
+    return response(res, 401, message);
   }
-}
-
+};
 export default authUser;
