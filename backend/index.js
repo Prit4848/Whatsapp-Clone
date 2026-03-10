@@ -25,13 +25,17 @@ import initializeSocket from "./src/service/socketService.js";
 
 
 
+app.set("trust proxy", 1);
+
 app.use(
   cors({
-    origin:["https://whatsapp-clone-frontend-gamma.vercel.app","http://localhost:5173"],
-    credentials: true,
-  }),
+    origin: [
+      "https://whatsapp-clone-frontend-gamma.vercel.app",
+      "http://localhost:5173"
+    ],
+    credentials: true
+  })
 );
-
 // app.use(limit)
 
 app.use(morgan("dev"));
