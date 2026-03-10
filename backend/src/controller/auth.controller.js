@@ -76,10 +76,11 @@ export const verifyOtp = asyncHandler(async (req, res) => {
 
   const token = generateToken(user._id);
 
+  const isProd = process.env.NODE_ENV === "production";
   res.cookie("token", token, {
       httpOnly: true,
-      secure: false,
-      sameSite: "Lax",
+      secure: isProd,
+      sameSite: isProd ? "None" : "Lax",
       maxAge: 365 * 24 * 60 * 60 *1000
     });
   return response(res,200,"Verify Otp Successfully",{ token, user });
@@ -88,10 +89,9 @@ export const verifyOtp = asyncHandler(async (req, res) => {
 export const logout = asyncHandler(async (req,res)=>{
   res.clearCookie("token", {
       httpOnly: true,
-      secure: false,
-      sameSite: "Lax",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
       maxAge: 365 * 24 * 60 * 60 *1000
     })
   response(res,200,"User logout successfully!")
 })
-

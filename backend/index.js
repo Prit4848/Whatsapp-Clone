@@ -12,6 +12,9 @@ import dbconnect from "./src/config/dbConnection.js";
 const app = express();
 const port = process.env.PORT || 5000;
 
+// Trust first proxy (needed for secure cookies behind Render/NGINX)
+app.set("trust proxy", 1);
+
 const limit = ratelimit({
   windowMs: 15 * 60 * 1000,
   max:100,
@@ -22,14 +25,23 @@ import indexRouter from './src/routes/index.routes.js'
 import initializeSocket from "./src/service/socketService.js";
 
 //middleware
-// app.use(
-//   cors({
-//     origin:[process.env.FRONTEND_URL,process.env.FRONTEND_URL1] ,
-//     credentials:true
-//   }),
-// );
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  process.env.FRONTEND_URL1,
+].filter(Boolean);
 
-app.use(cors({ origin: true, credentials: true }));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true); // allow non-browser clients
+      if (allowedOrigins.length === 0) return callback(null, true);
+      return allowedOrigins.includes(origin)
+        ? callback(null, true)
+        : callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+  })
+);
 
 // app.use(limit)
 app.use((req,res,next)=>{
