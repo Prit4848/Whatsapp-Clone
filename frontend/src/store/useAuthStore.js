@@ -61,7 +61,9 @@ export const useAuthStore = create((set, get) => ({
     try {
       const res = await axiosInstance.post("/auth/verify-otp", data);
       console.log(res.data.data.user);
-      
+      if (res.data?.data?.token) {
+        localStorage.setItem("token", res.data.data.token);
+      }
       set({ authUser: res.data.data.user,isAuthenticated:true });
       toast.success(`${res.data.message}`);
 
@@ -78,6 +80,7 @@ export const useAuthStore = create((set, get) => ({
   logout: async () => {
     try {
       await axiosInstance.get("/auth/logout");
+      localStorage.removeItem("token");
       set({ authUser: null,isAuthenticated:false });
       toast.success("Logged out successfully");
       get().disconnectSocket();

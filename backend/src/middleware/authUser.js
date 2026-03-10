@@ -4,7 +4,12 @@ import { response } from '../utils/responseHandler.js'
 
 const authUser = async (req, res, next) => {
   try {
-    const token = req.cookies?.token;
+    const authHeader = req.headers?.authorization || req.headers?.Authorization;
+    const bearerToken =
+      typeof authHeader === "string" && authHeader.startsWith("Bearer ")
+        ? authHeader.slice(7).trim()
+        : null;
+    const token = req.cookies?.token || bearerToken || req.headers?.["x-access-token"];
     console.log(req.cookies);
     
     if (!token) {
