@@ -1,34 +1,33 @@
-import nodemailer from "nodemailer";
+import SibApiV3Sdk from "sib-api-v3-sdk";
 
-const transporter = nodemailer.createTransport({
-  host: "smtp-relay.brevo.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: "apikey",
-    pass: process.env.BREVO_SMTP_KEY,
-  },
-});
+const client = SibApiV3Sdk.ApiClient.instance;
+const apiKey = client.authentications["api-key"];
+
+apiKey.apiKey = process.env.BREVO_SMTP_KEY;
+
+const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 
 const sendEmail = async ({ email, otp }) => {
   try {
-    const info = await transporter.sendMail({
-      from: `"WhatsApp Clone" <${process.env.BREVO_EMAIL}>`,
-      to: email.trim(),
+    await apiInstance.sendTransacEmail({
+      sender: {
+        email: process.env.BREVO_EMAIL,
+        name: "WhatsApp Clone",
+      },
+      to: [{ email: email.trim() }],
       subject: "Your WhatsApp verification code",
-      html: `
-        <div style="font-family: Arial, sans-serif; color: #333;">
-          <h2 style="color: #075e54;">🔐 Verification Code</h2>
+      htmlContent: `
+        <div style="font-family: Arial, sans-serif;">
+          <h2>🔐 Verification Code</h2>
           <p>Your OTP is:</p>
-          <h1 style="background: #e0f7fa; display: inline-block; padding: 10px;">${otp}</h1>
+          <h1 style="background:#e0f7fa;padding:10px;">${otp}</h1>
           <p>Valid for 5 minutes.</p>
         </div>
       `,
     });
 
-    return info;
   } catch (err) {
-    console.error("Email failed:", err.message);
+    console.error("Email failed:", err);
     throw err;
   }
 };
