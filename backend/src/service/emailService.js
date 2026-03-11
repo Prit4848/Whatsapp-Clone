@@ -23,13 +23,13 @@ const sendEmail = async ({ email, otp }) => {
   `;
 
   const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
+    host: 'smtp-relay.brevo.com',
     port: 587,
     secure: false,
     family: 4,
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
+      user: process.env.BREVO_SMTP_KEY_NAME,
+      pass: process.env.BREVO_SMTP_KEY,
     },
     tls: {
       rejectUnauthorized: false, 
@@ -38,7 +38,7 @@ const sendEmail = async ({ email, otp }) => {
   });
 
   const mailData = {
-    from: `"WhatsApp Clone" <${process.env.EMAIL_USER}>`,
+    from: `"WhatsApp Clone" <${process.env.BREVO_EMAIL}>`,
     to: email.trim(),
     subject: "Your WhatsApp verification code",
     html,
