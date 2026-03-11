@@ -12,7 +12,14 @@ import { useStatusStore } from "./store/useStatusStore";
 const App = () => {
 
   const {checkAuth,isCheckingAuth,authUser,connectSocket,disconnectSocket,socket} = useAuthStore()  
-  const {setAllChats,activeChat,setMessage,initializeSocketListeners,isCreateChat} = useChatStore()
+  const {
+    setAllChats,
+    activeChat,
+    setMessage,
+    initializeSocketListeners,
+    isCreateChat,
+    setMobileView,
+  } = useChatStore()
   const {fetchStatuses,fetchMyStatuses,initializeStatusSockets}  = useStatusStore()
   
   useEffect(() => {
@@ -46,6 +53,21 @@ const App = () => {
       initializeStatusSockets()
     }
   }, [socket])
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+
+    const handleChange = (e) => {
+      setMobileView(e.matches);
+    };
+
+    setMobileView(mediaQuery.matches);
+    mediaQuery.addEventListener("change", handleChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleChange);
+    };
+  }, [setMobileView]);
   
   
   return (

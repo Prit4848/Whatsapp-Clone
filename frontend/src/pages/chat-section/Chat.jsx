@@ -1,28 +1,9 @@
-import { useEffect } from "react";
 import {useChatStore} from "../../store/useChatStore";
 import ChatSidebar from "../../components/ChatSidebar";
 import ChatWindow from "../../components/ChatWindow";
 
 const Chat = () => {
-  const { isMobileView, activeChat, setMobileView } = useChatStore();
-
-  // Handle window resize
- useEffect(() => {
-  const mediaQuery = window.matchMedia("(max-width: 767px)");
-
-  const handleChange = (e) => {
-    setMobileView(e.matches);
-  };
-
-  // Set initial value
-  setMobileView(mediaQuery.matches);
-
-  mediaQuery.addEventListener("change", handleChange);
-
-  return () => {
-    mediaQuery.removeEventListener("change", handleChange);
-  };
-}, [setMobileView]);
+  const { isMobileView, activeChat } = useChatStore();
 
   return (
     <div className="flex h-[100dvh] w-full overflow-hidden bg-background">

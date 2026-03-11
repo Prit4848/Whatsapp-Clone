@@ -47,8 +47,9 @@ export const useAuthStore = create((set, get) => ({
     try {
       const res = await axiosInstance.post("/auth/send-otp", data);
       toast.success(`${res.data.message}`);
+      return res
     } catch (error) {
-      const errorMessage = error.response.data.message || error.message
+      const errorMessage = error?.response?.data?.message || error.message || "Email sending error please try again"
       toast.error(`${errorMessage}`);
     } finally {
       set({ isLoggingIn: false });

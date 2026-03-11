@@ -25,7 +25,8 @@ export const useChatStore = create((set, get) => ({
   onlineUsers: new Map(),
 
   // UI state
-  isMobileView: window.innerWidth < 768,
+  isMobileView:
+    typeof window !== "undefined" ? window.innerWidth < 768 : false,
   showChatList: true,
   isLoading: false,
 
