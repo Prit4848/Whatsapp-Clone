@@ -19,3 +19,7 @@ CLOUDINARY_API_KEY='973164878218793'
 CLOUDINARY_API_SECRET='EXeaBcJirnC9fifDMZUdAt7tjNY'
 
 REDIS_URL='redis://default:V6ly9WxUsSowV7TtBxMRHy3HrtpFVzGp@redis-18096.crce179.ap-south-1-1.ec2.cloud.redislabs.com:18096'
+
+# Brevo email
+BREVO_EMAIL='your-verified-sender@yourdomain.com'
+BREVO_API_KEY='xkeysib-xxxxxxxxxxxxxxxx'

@@ -1,39 +1,59 @@
-import * as SibApiV3Sdk from "sib-api-v3-sdk"; // Change to * as
+import nodemailer from 'nodemailer';
+
+
+const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true, 
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS, 
+  },
+});
+
+// Verify connection on startup
+transporter.verify((error, success) => {
+  if (error) {
+    console.error('❌ Email service connection Failed:', error.message);
+  } else {
+    console.log('✅ Email service is configured and ready');
+  }
+});
 
 const sendEmail = async ({ email, otp }) => {
+  if (!email || !email.trim()) {
+    throw new Error('Invalid email address');
+  }
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 500px; margin: auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
+      <h2 style="color: #075e54; text-align: center;">🔐 WhatsApp Web Verification</h2>
+      <p>Hi there,</p>
+      <p>Your one-time password (OTP) to verify your WhatsApp Web account is:</p>
+      <div style="text-align: center; margin: 30px 0;">
+        <span style="background: #e0f7fa; color: #000; padding: 15px 30px; font-size: 24px; font-weight: bold; border-radius: 5px; letter-spacing: 5px;">
+          ${otp}
+        </span>
+      </div>
+      <p><strong>This OTP is valid for the next 5 minutes.</strong> Please do not share this code with anyone.</p>
+      <p>If you didn’t request this OTP, please ignore this email.</p>
+      <p style="margin-top: 20px;">Thanks & Regards,<br/><strong>WhatsApp Web Security Team</strong></p>
+      <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;" />
+      <p style="font-size: 12px; color: #777; text-align: center;">This is an automated message. Please do not reply.</p>
+    </div>
+  `;
+
   try {
-    // Initialize inside the function to ensure the client is fresh
-    const client = SibApiV3Sdk.ApiClient.instance;
-    const apiKey = client.authentications["api-key"];
-    apiKey.apiKey = process.env.BREVO_SMTP_KEY;
-
-    const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-
-    // It is safer to use the SendSmtpEmail constructor
-    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-
-    sendSmtpEmail.sender = { 
-      email: process.env.BREVO_EMAIL, 
-      name: "WhatsApp Clone" 
-    };
-    sendSmtpEmail.to = [{ email: email.trim() }];
-    sendSmtpEmail.subject = "Your WhatsApp verification code";
-    sendSmtpEmail.htmlContent = `
-        <div style="font-family: Arial, sans-serif;">
-          <h2>🔐 Verification Code</h2>
-          <p>Your OTP is:</p>
-          <h1 style="background:#e0f7fa;padding:10px;">${otp}</h1>
-          <p>Valid for 5 minutes.</p>
-        </div>
-      `;
-
-    const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
-    return result;
-
-  } catch (err) {
-    // If it's a Brevo API error, the message is hidden in err.response.text
-    console.error("Email failed:", err.response?.text || err.message);
-    throw err;
+    const info = await transporter.sendMail({
+      from: `"WhatsApp Web Security" <${process.env.EMAIL_USER}>`,
+      to: email.trim(),
+      subject: "Your WhatsApp verification code",
+      html,
+    });
+    return info;
+  } catch (error) {
+    console.error("Error sending email:", error);
+    throw new Error("Could not send verification email.");
   }
 };
 
