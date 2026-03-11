@@ -1,16 +1,12 @@
 import nodemailer from 'nodemailer';
 
-/**
- * Sends an email using Nodemailer with a Promise wrapper.
- * Adapted from the pattern by Gour Chandra Saha.
- */
+
 const sendEmail = async ({ email, otp }) => {
-  // 1. Validation
+
   if (!email || !email.trim()) {
     throw new Error('Invalid email address');
   }
 
-  // 2. Prepare HTML content (WhatsApp Clone Theme)
   const html = `
     <div style="font-family: Arial, sans-serif; color: #333; max-width: 500px; margin: auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
       <h2 style="color: #075e54; text-align: center;">🔐 Verification Code</h2>
@@ -26,21 +22,19 @@ const sendEmail = async ({ email, otp }) => {
     </div>
   `;
 
-  // 3. Configure Transporter
-  // Using Port 465 with secure: true as requested, 
-  // but adding tls object to handle hosting handshake issues.
   const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 587,
     secure: false,
+    family: 4,
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
     tls: {
-      // This helps bypass timeout/handshake issues on Render
       rejectUnauthorized: false, 
     },
+    connectionTimeout: 20000
   });
 
   const mailData = {
@@ -50,7 +44,7 @@ const sendEmail = async ({ email, otp }) => {
     html,
   };
 
-  // 4. Wrap sendMail in a Promise for better async/await handling on Render
+
   return await new Promise((resolve, reject) => {
     transporter.sendMail(mailData, (err, info) => {
       if (err) {
