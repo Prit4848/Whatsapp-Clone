@@ -3,7 +3,6 @@ import { formatStatusTime } from "../../utils/helpers";
 
 const DeleteStatusModal = ({ status, onClose, onDelete }) => {
   if (!status[0]) return null;
-  console.log(status[0].content);
   
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">

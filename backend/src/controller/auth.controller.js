@@ -31,8 +31,6 @@ export const sendOtp = asyncHandler(async (req, res) => {
   if (!user) {
     user = new User({ phoneNumber, phoneSuffix });
   }
-  console.log(user);
-
   await twilloService.sendOtpToPhoneNumbser(fullNumber);
   await user.save();
 
@@ -65,7 +63,6 @@ export const verifyOtp = asyncHandler(async (req, res) => {
       user = new User({ phoneNumber, phoneSuffix });
     }
     const result = await twilloService.verifyOtp(fullNumber, otp);
-    console.log(result.status);
 
     if (result.status !== "approved") {
       return response(res, 400, "Invalid Otp");

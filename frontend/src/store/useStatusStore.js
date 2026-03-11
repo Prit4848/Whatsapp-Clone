@@ -20,7 +20,6 @@ export const useStatusStore = create((set, get) => ({
     socket.off("new_status");
 
     socket.on("new_status", (newStatus) => {
-      console.log("new Status");
 
       set((state) => {
         const formattedStatus = {
@@ -149,7 +148,6 @@ export const useStatusStore = create((set, get) => ({
       const res = await axiosInstance.get("/status/me");
 
       const grouped = {};
-      console.log(res.data.data);
 
       res.data.data.forEach((status) => {
         const userId = status.user?._id;

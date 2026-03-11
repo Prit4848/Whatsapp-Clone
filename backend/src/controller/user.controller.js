@@ -10,12 +10,9 @@ export const updateProfile = asyncHandler(async (req, res) => {
   let user;
   user = await User.findOne({ _id: userId });
   const file = req.file;
-  console.log("BODY:", req.body);
-  console.log("FILE:", req.file);
-
+ 
   if (file) {
     const uploadResult = await uploadFiletoClodinary(file);
-    console.log(uploadResult);
     user.profilePicture = uploadResult.secure_url;
   } else if (req.body.media) {
     user.profilePicture = req.body.media;
@@ -55,7 +52,7 @@ export const allUsers = asyncHandler(async (req, res) => {
   });
   notInclude.add(userId)
 
-  const users = await User.find({ _id: { $nin:Array.from(notInclude)}})
+  const users = await User.find({ _id: { $nin:Array.from(notInclude)},isVarified:true})
     .select(
       "username profilePicture lastSeen isOnline about email phoneNumber phoneSuffix _id",
     )

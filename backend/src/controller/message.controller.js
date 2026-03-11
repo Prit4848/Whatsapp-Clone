@@ -162,13 +162,9 @@ export const deleteMessage = asyncHandler(async (req, res) => {
    }
    
    await message.deleteOne();
-   console.log(req.socketUserMap);
-   
-   console.log(id);
+
   if (req.io && req.socketUserMap) {
     const receiversocketId = req.socketUserMap.get(id);
-    console.log(receiversocketId);
-    
     req.io.to(receiversocketId).emit("message_deleted", {messageId});
   }
 
@@ -197,8 +193,7 @@ export const editMessage = asyncHandler(async (req,res)=>{
   message.content = content;
 
   await message.save()
-   console.log(req.socketUserMap);
-   
+  
   if(req.io && req.socketUserMap){
     const socketReceiverId = req.socketUserMap.get(message.receiver.toString())
 

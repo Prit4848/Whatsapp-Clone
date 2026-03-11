@@ -24,14 +24,11 @@ const sendOtpToPhoneNumbser = async (phoneNumber)=>{
 
 const verifyOtp = async (phoneNumber,otp)=>{
     try {
-        console.log(phoneNumber,otp);
-        
-        console.log(`phone number ${phoneNumber}otp for varification ${otp}`);
+    
         const response = await client.verify.v2.services(servicesid).verificationChecks.create({
             to:phoneNumber,
             code:otp
         })
-        console.log(`verify otp response:`,response);
         return response;
     } catch (error) {
          console.error(error.mesaage);

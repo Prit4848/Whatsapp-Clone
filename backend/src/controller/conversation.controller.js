@@ -1,6 +1,5 @@
 import Conversation from "../models/Conversation.js";
 import Message from "../models/Message.js";
-import User from "../models/User.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { response } from "../utils/responseHandler.js";
 
@@ -8,10 +7,12 @@ export const getConversations = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
   const conversations = await Conversation.find({ participants: userId })
-    .populate(
-      "participants",
-      "username profilePicture isOnline lastSeen phoneNumber phoneSuffix email",
-    )
+    .populate({
+      path: "participants",
+      select:
+        "username profilePicture isOnline lastSeen phoneNumber phoneSuffix email isVarified",
+      match: { isVarified: true },
+    })
     .populate({
       path: "lastMessage",
       populate: {
@@ -21,7 +22,8 @@ export const getConversations = asyncHandler(async (req, res) => {
     })
     .sort({ updatedAt: -1 })
     .lean();
-
+  console.log(conversations);
+  
   const formatedParticipant = conversations.map((conversation) => {
     const otherUser = conversation.participants.find(
       (user) => user._id !== userId,
@@ -58,8 +60,9 @@ export const createConversation = asyncHandler(async (req, res) => {
   });
   await conversation.save();
 
-  const populateconversation  = await Conversation.findById(conversation._id)
-  .populate("participants","username profilePicture _id").lean()
+  const populateconversation = await Conversation.findById(conversation._id)
+    .populate("participants", "username profilePicture _id")
+    .lean();
 
   const receiverId = conversation.participants.find((id) => !id.equals(userId));
 
@@ -68,7 +71,7 @@ export const createConversation = asyncHandler(async (req, res) => {
 
     if (receiverSocketId) {
       req.io.to(receiverSocketId).emit("create_chat", {
-        conversation:populateconversation,
+        conversation: populateconversation,
       });
     }
   }

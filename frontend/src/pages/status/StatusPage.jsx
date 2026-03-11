@@ -67,7 +67,6 @@ const StatusPage = () => {
 
     setMobilePanel("right");
   };
-  console.log(myStatus);
 
   const handleViewMyStatus = () => {
     if (myStatuses) {

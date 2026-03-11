@@ -85,7 +85,6 @@ const initializeSocket = (server) => {
       if (!conversationId || !receiverId || !userId) return;
 
       const receiverSocketId = OnlineUsers.get(receiverId);
-      console.log("send", receiverSocketId);
       if (!receiverSocketId) return;
 
       // Emit immediately
@@ -147,7 +146,6 @@ const initializeSocket = (server) => {
           const existingReaction = message.reactions.find(
             (r) => r.user.toString() === reactionUserId.toString(),
           );
-          console.log(existingReaction);
 
           if (existingReaction.emoji === emoji) {
             // Remove reaction (toggle off)

@@ -123,8 +123,7 @@ export const useChatStore = create((set, get) => ({
     // USER TYPING
     // ===============================
     socket.on("user_typing", ({ userId, conversationId, isTyping }) => {
-      console.log("typing");
-
+ 
       set((state) => {
         const newTypingUsers = new Map(state.typingUsers);
 
@@ -179,8 +178,6 @@ export const useChatStore = create((set, get) => ({
     });
 
     socket.on("create_chat", ({ conversation }) => {
-      console.log("Received conversation:", conversation);
-
       const createdConversation = {
         _id: conversation._id,
         participants: conversation.participants.map((i) =>
@@ -206,11 +203,8 @@ export const useChatStore = create((set, get) => ({
     try {
       const currentUser = useAuthStore.getState().authUser;
 
-      if (!currentUser) {
-        console.log("User not ready");
-        return;
-      }
-
+      if (!currentUser) return;
+      
       const response = await axiosInstance.get("/conversation/");
 
       const chats = response.data.data.conversations.map((chat) => ({
@@ -230,14 +224,11 @@ export const useChatStore = create((set, get) => ({
 
       set({ chats });
     } catch (error) {
-      console.log("ERROR:", error.message);
-
       const errorMessage =
         error.response?.data?.message ||
         error.message ||
         "Something Went Wrong Please Try Again";
-
-      console.log(errorMessage);
+      toast.error(errorMessage)
     }
   },
 
@@ -248,10 +239,7 @@ export const useChatStore = create((set, get) => ({
       const response = await axiosInstance.post("/conversation/", {
         participant: participant,
       });
-      console.log(response);
       const createdConversationresponse = response.data.data.conversation;
-      console.log(response.data.data.conversation);
-
      const createdConversation = {
   _id: createdConversationresponse._id,
   participants: createdConversationresponse.participants.map((user) =>
@@ -332,7 +320,6 @@ export const useChatStore = create((set, get) => ({
       const { activeChat, chats } = get();
       const chat = chats.find((c) => c._id === activeChat);
       const receiver = chat.participants.find((i) => i !== "current");
-      console.log(currentUser, receiver);
 
       const formData = new FormData();
 
@@ -463,7 +450,6 @@ export const useChatStore = create((set, get) => ({
   addReactions: (messageId, emoji) => {
     const { socket, authUser } = useAuthStore.getState();
     if (socket && authUser) {
-      console.log("woring");
       socket.emit("add_reactions", {
         messageId,
         emoji,
@@ -476,7 +462,6 @@ export const useChatStore = create((set, get) => ({
     const { socket, authUser } = useAuthStore.getState();
     const { activeChat } = get();
     if (!socket || !receiverId) return;
-    console.log("start", receiverId);
 
     socket.emit("typing_start", {
       conversationId: activeChat,

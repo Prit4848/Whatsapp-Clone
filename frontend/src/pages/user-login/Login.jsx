@@ -3,7 +3,6 @@ import { Mail, Phone, MessageCircleDashed } from "lucide-react";
 import { useAuthStore } from "../../store/useAuthStore";
 import OtpVerification from "../../components/OtpVerification";
 import countries from '../../utils/countriles';
-import toast from "react-hot-toast";
 
 const Login = () => {
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -46,8 +45,7 @@ const Login = () => {
       : { phoneNumber, phoneSuffix };
 
       const res = await sendOtp(payload);
-      console.log(res);
-      
+
       if(res?.data?.status === "success"){
         setStep("otp");
       }

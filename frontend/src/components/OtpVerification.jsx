@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import OtpInput from "./OtpInput";
-import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "../store/useAuthStore";
 
 const OtpVerification = ({ 
   inputType, 
@@ -13,14 +13,15 @@ const OtpVerification = ({
 }) => {
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
-  const [resendTimer, setResendTimer] = useState(30);
+  const [resendTimer, setResendTimer] = useState(300);
   const [canResend, setCanResend] = useState(false);
-  const navigate =useNavigate()
+
+  const {sendOtp} = useAuthStore()
 
   // Countdown timer for resend
   useEffect(() => {
     if (resendTimer > 0) {
-      const timer = setTimeout(() => setResendTimer(resendTimer - 1), 5000);
+      const timer = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
       return () => clearTimeout(timer);
     } else {
       setCanResend(true);
@@ -55,23 +56,20 @@ const OtpVerification = ({
       setError("Please enter a complete 6-digit OTP");
       return;
     }
-
-    // Mock verification - accept any 6-digit OTP for demo
-    // In real implementation, this would validate against backend
     onVerify(otp);
-    
   };
 
   const handleResend = () => {
     if (!canResend) return;
-    
-    // Reset timer
+     const payload = inputType === "email" 
+      ? { email: inputValue.trim() } 
+      : { phoneNumber:inputValue.match(/\d/g).join('').slice(-10), phoneSuffix:+91 };
+    sendOtp(payload)
     setResendTimer(300);
     setCanResend(false);
     setOtp("");
     setError("");
     onReset()
-    // Mock resend - in real implementation, this would call API
     console.log("Resending OTP to:", inputValue);
   };
 

@@ -315,19 +315,28 @@ const ChatWindow = () => {
         <PhotoProvider
           visible={showProfilePic}
           onClose={() => setShowProfilePic(false)}
-          maskOpacity={1}
+          // Dynamic mask background based on theme
+          maskClassName="bg-white dark:bg-[#0b141a]"
           speed={() => 300}
           overlayRender={() => (
             <div className="absolute top-0 left-0 w-full z-50">
-              <div className="flex items-center gap-3 px-3 pt-10 pb-8 bg-gradient-to-b from-black/80 via-black/30 to-transparent">
+              {/* Adaptive Gradient: Light gray for light mode, Dark for dark mode */}
+              <div
+                className="flex items-center gap-3 px-3 pt-10 pb-8 
+          bg-gradient-to-b from-black/10 via-transparent to-transparent
+          dark:from-black/60 dark:via-black/20"
+              >
                 <button
                   onClick={() => setShowProfilePic(false)}
-                  className="flex items-center justify-center w-9 h-9 text-white rounded-full transition-all duration-150 active:scale-90 hover:bg-white/15"
+                  className="flex items-center justify-center w-10 h-10 
+              text-slate-800 dark:text-white/90
+              rounded-full transition-all duration-150 active:scale-95 
+              hover:bg-black/5 dark:hover:bg-white/10"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    width="22"
-                    height="22"
+                    width="24"
+                    height="24"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -338,17 +347,24 @@ const ChatWindow = () => {
                     <path d="m15 18-6-6 6-6" />
                   </svg>
                 </button>
+
                 <div className="flex items-center gap-3">
                   <img
                     src={partner.profilePicture}
                     alt={partner.username}
-                    className="w-9 h-9 rounded-full object-cover ring-2 ring-white/20"
+                    className="w-10 h-10 rounded-full object-cover ring-2 ring-black/5 dark:ring-white/10 shadow-sm"
                   />
                   <div className="flex flex-col leading-tight">
-                    <span className="text-white text-[16px] font-semibold tracking-tight">
+                    <span
+                      className="text-[17px] font-semibold tracking-tight 
+                text-slate-900 dark:text-white"
+                    >
                       {partner.username}
                     </span>
-                    <span className="text-white/50 text-[11px] font-medium tracking-wide uppercase">
+                    <span
+                      className="text-[12px] font-medium tracking-wide uppercase 
+                text-slate-500 dark:text-white/60"
+                    >
                       {new Date().toLocaleDateString("en-US", {
                         month: "short",
                         day: "numeric",

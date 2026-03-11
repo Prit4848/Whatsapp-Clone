@@ -10,8 +10,7 @@ const authUser = async (req, res, next) => {
         ? authHeader.slice(7).trim()
         : null;
     const token = req.cookies?.token || bearerToken || req.headers?.["x-access-token"];
-    console.log(req.cookies);
-    
+  
     if (!token) {
       return response(res, 401, "Unauthorized: No token provided");
     }

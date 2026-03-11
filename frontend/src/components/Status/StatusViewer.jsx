@@ -21,8 +21,6 @@ const StatusViewer = ({ status, onClose, isOwnStatus }) => {
     const storyId = status.content[currentIndex]?.id;
 
     if (!storyId) return;
-    console.log(storyId);
-
     markAsViewed(storyId);
   }, [currentIndex, status, isOwnStatus]);
 

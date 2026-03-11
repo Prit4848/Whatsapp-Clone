@@ -6,7 +6,6 @@ import Status from "../models/Status.js";
 
 export const createStatus = asyncHandler(async (req, res) => {
   const { content } = req.body;
-  console.log(req.body);
 
   const userId = req.user._id;
 
@@ -50,7 +49,6 @@ export const createStatus = asyncHandler(async (req, res) => {
     content: content ,
     statusUrl: statusUrl ? statusUrl : ""
   });
-  console.log(status);
 
   await status.save();
 
@@ -58,12 +56,8 @@ export const createStatus = asyncHandler(async (req, res) => {
     .populate("user", "username profilePicture")
     .populate("viewer", "username profilePicture");
 
-    console.log(req.socketUserMap);
-    
   if (req.io && req.socketUserMap) {
     for (const [connectedUserId, socketId] of req.socketUserMap) {
-      console.log("working");
-      
       if (connectedUserId !== userId.toString()) {
         req.io.to(socketId).emit("new_status", populateStatus);
       }
