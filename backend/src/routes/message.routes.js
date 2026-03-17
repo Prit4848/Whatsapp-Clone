@@ -10,5 +10,6 @@ router.route('/:conversationId').get(authUser,messageController.getMessages)
 router.route('/read').put(authUser,messageController.markasRead)
 router.route('/:messageId').delete(authUser,messageController.deleteMessage)
 router.route("/:messageId").put(authUser,messageController.editMessage);
+router.route("/send-poll").post(authUser,messageController.sendPoll)
 
 export default router

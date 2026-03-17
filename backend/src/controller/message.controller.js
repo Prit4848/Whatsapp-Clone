@@ -5,23 +5,57 @@ import { response } from "../utils/responseHandler.js";
 import Message from "../models/Message.js";
 
 export const sendMessage = asyncHandler(async (req, res) => {
-  const { senderId, receiverId, content, messageStatus } = req.body;
-  const participants = [senderId, receiverId].sort();
- 
-  let conversation = await Conversation.findOne({ participants });
+  const senderId = req.user._id;
+  const { conversationId, content } = req.body;
+  const file = req.file;
+
+  if (!conversationId) {
+    return response(res, 400, "conversationId is required");
+  }
+
+  const conversation = await Conversation.findById(conversationId);
 
   if (!conversation) {
-    conversation = new Conversation({ participants });
-    await conversation.save();
+    return response(res, 404, "Conversation not found");
   }
+
+  // ✅ Check sender is part of conversation
+  const isMember = conversation.participants.some(
+    (id) => id.toString() === senderId.toString()
+  );
+
+  if (!isMember) {
+    return response(res, 403, "You are not part of this conversation");
+  }
+
+  // ✅ Check announcement mode / permission
+  if (conversation.type === "group") {
+    const isAdmin = conversation.admins.some(
+      (id) => id.toString() === senderId.toString()
+    );
+
+    if (conversation.announcementMode?.enabled && !isAdmin) {
+      return response(res, 403, "Only admins can send messages");
+    }
+
+    if (
+      conversation.memberPermissions &&
+      conversation.memberPermissions.sendMessage === false &&
+      !isAdmin
+    ) {
+      return response(res, 403, "You are not allowed to send messages");
+    }
+  }
+
   let imageOrVideoUrl = null;
   let contentType = null;
-  const file = req.file;
+
+  // ✅ Handle file upload
   if (file) {
     const uploadfile = await uploadFiletoClodinary(file);
 
     if (!uploadfile.secure_url) {
-      return response(res, 400, "failed to upload media");
+      return response(res, 400, "Failed to upload media");
     }
 
     imageOrVideoUrl = uploadfile.secure_url;
@@ -31,48 +65,58 @@ export const sendMessage = asyncHandler(async (req, res) => {
     } else if (file.mimetype.startsWith("image")) {
       contentType = "image";
     } else {
-      return response(res, "400", "Unsupported File Type");
+      return response(res, 400, "Unsupported file type");
     }
-  } else if (content.trim()) {
+  } 
+  // ✅ Handle text
+  else if (content && content.trim()) {
     contentType = "text";
-  } else {
-    return response(res, 400, "message Content is require");
+  } 
+  else {
+    return response(res, 400, "Message content is required");
   }
 
-  const message = new Message({
-    conversation: conversation._id,
+  // ✅ Create message
+  const message = await Message.create({
+    conversation: conversationId,
     sender: senderId,
-    receiver: receiverId,
-    imageOrVideoUrl,
-    contentType,
     content,
-    messageStatus,
+    contentType,
+    imageOrVideoUrl,
+    messageStatus: "sent",
   });
-  
-  await message.save();
-  if (message.content) {
-    conversation.lastMessage = message._id;
+
+  // ✅ Update last message
+  conversation.lastMessage = message._id;
+
+  // ✅ Update unread count (group logic)
+  if (conversation.type === "group") {
+    conversation.unreadCount = (conversation.unreadCount || 0) + 1;
   }
-  conversation.unreadCount += 1;
+
   await conversation.save();
 
-  const popolateMessage = await Message.findOne({ _id: message._id })
-    .populate({ path: "sender", select: "username profilePicture" })
-    .populate({ path: "receiver", select: "username profilePicture" });
-    
-  if (req.io && req.socketUserMap) {
-    const receiverSocketId = req.socketUserMap.get(receiverId);
-    
-    if (receiverSocketId) {
-      req.io.to(receiverSocketId).emit("receive_message", popolateMessage);
-      message.messageStatus = "delivered";
-      await message.save();
-    }
+  // ✅ Populate message
+  const populatedMessage = await Message.findById(message._id)
+    .populate("sender", "username profilePicture")
+    .lean();
+
+  // ✅ Socket emit
+  if (req.io) {
+    // Send to all participants except sender
+    conversation.participants.forEach((participantId) => {
+      if (participantId.toString() !== senderId.toString()) {
+        const socketId = req.socketUserMap?.get(participantId.toString());
+
+        if (socketId) {
+          req.io.to(socketId).emit("receive_message", populatedMessage);
+        }
+      }
+    });
   }
 
-  return response(res, 201, "Message Send Succesfully", popolateMessage);
+  return response(res, 201, "Message sent successfully", populatedMessage);
 });
-
 export const getMessages = asyncHandler(async (req, res) => {
   const userId = req.user._id;
   const { conversationId } = req.params;
@@ -202,3 +246,74 @@ export const editMessage = asyncHandler(async (req,res)=>{
 
   return response(res,200,"Message Update Successfully")
 })
+
+export const sendPoll = asyncHandler(async (req, res) => {
+  const senderId = req.user._id;
+  const { conversationId, question, options, anonymous } = req.body;
+
+  if (!conversationId || !question || !options || options.length < 2) {
+    return response(res, 400, "All fields are required (min 2 options)");
+  }
+
+  const conversation = await Conversation.findById(conversationId);
+
+  if (!conversation) {
+    return response(res, 404, "Conversation not found");
+  }
+
+  const isMember = conversation.participants.some(
+    (id) => id.toString() === senderId.toString()
+  );
+
+  if (!isMember) {
+    return response(res, 403, "You are not part of this conversation");
+  }
+
+  if (conversation.type === "group") {
+    const isAdmin = conversation.admins.some(
+      (id) => id.toString() === senderId.toString()
+    );
+
+    if (conversation.announcementMode?.enabled && !isAdmin) {
+      return response(res, 403, "Only admins can send messages");
+    }
+  }
+
+  const formattedOptions = options.map((opt) => ({
+    text: opt,
+    votes: [],
+  }));
+
+  const message = await Message.create({
+    conversation: conversationId,
+    sender: senderId,
+    contentType: "poll",
+    poll: {
+      question,
+      options: formattedOptions,
+      anonymous: !!anonymous,
+    },
+    messageStatus: "sent",
+  });
+
+  conversation.lastMessage = message._id;
+  await conversation.save();
+
+  const populatedMessage = await Message.findById(message._id)
+    .populate("sender", "username profilePicture")
+    .lean();
+    
+  if (req.io) {
+    conversation.participants.forEach((participantId) => {
+      if (participantId.toString() !== senderId.toString()) {
+        const socketId = req.socketUserMap?.get(participantId.toString());
+
+        if (socketId) {
+          req.io.to(socketId).emit("receive_message", populatedMessage);
+        }
+      }
+    });
+  }
+
+  return response(res, 201, "Poll created successfully", populatedMessage);
+});
