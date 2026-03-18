@@ -1,51 +1,31 @@
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
-{
-  phoneNumber: { type: String, unique: true, sparse: true },
-
-  username: String,
-
-  email: {
-    type: String,
-    lowercase: true,
-    unique: true
+  {
+    phoneNumber: { type: String, unique: true, sparse: true },
+    phoneSuffix: { type: String },
+    username: { type: String },
+    email: {
+      type: String,
+      lowercase: true,
+      unique: true,
+      validate: {
+        validator: function (v) {
+          return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+        },
+        message: (props) => `${props.value} is not a valid email address!`,
+      },
+    },
+    emailOtp: { type: String },
+    emailOtpExpiry: { type: String },
+    profilePicture: { type: String },
+    about: { type: String },
+    lastSeen: { type: String },
+    isOnline: { type: Boolean, default: false },
+    isVarified: { type: Boolean, default: false },
+    agreed: { type: Boolean, default: false },
   },
-
-  profilePicture: String,
-
-  about: {
-    type: String,
-    default: "Hey there! I am using chat."
-  },
-
-  lastSeen: Date,
-
-  isOnline: {
-    type: Boolean,
-    default: false
-  },
-
-  blockedUsers: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "user"
-  }],
-
-  contacts: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "user"
-  }],
-
-  deviceTokens: [String],
-
-  role: {
-    type: String,
-    enum: ["user","admin"],
-    default: "user"
-  }
-
-},
-{ timestamps: true }
+  { timestamps: true },
 );
 
 const User = mongoose.model("user",userSchema)
