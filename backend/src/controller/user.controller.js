@@ -52,7 +52,7 @@ export const allUsers = asyncHandler(async (req, res) => {
   });
   notInclude.add(userId)
 
-  const users = await User.find({ _id: { $nin:Array.from(notInclude)},isVarified:true})
+  const users = await User.find({ _id: { $nin:Array.from(notInclude)},isVerified:true})
     .select(
       "username profilePicture lastSeen isOnline about email phoneNumber phoneSuffix _id",
     )

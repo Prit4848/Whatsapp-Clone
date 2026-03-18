@@ -51,7 +51,7 @@ export const verifyOtp = asyncHandler(async (req, res) => {
     }
     user.emailOtpExpiry = null;
     user.emailOtp = null;
-    user.isVarified = true;
+    user.isVerified = true;
     await user.save();
   } else {
     if (!phoneNumber || !phoneSuffix) {
@@ -67,7 +67,7 @@ export const verifyOtp = asyncHandler(async (req, res) => {
     if (result.status !== "approved") {
       return response(res, 400, "Invalid Otp");
     }
-    user.isVarified = true;
+    user.isVerified = true;
     await user.save();
   }
 
