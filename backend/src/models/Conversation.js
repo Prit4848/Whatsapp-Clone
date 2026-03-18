@@ -6,7 +6,7 @@ const conversationSchema = new mongoose.Schema(
 
   type: {
     type: String,
-    enum: ["direct", "group"],
+    enum: ["direct", "group", "community", "channel"],
     default: "direct"
   },
 
@@ -47,10 +47,7 @@ const conversationSchema = new mongoose.Schema(
   unreadCount: {
     type: Map,
     of: Number
-  },
-  announcementMode: {
-  enabled: { type: Boolean, default: false }
-}
+  }
 
 },
 { timestamps: true }
