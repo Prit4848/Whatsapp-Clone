@@ -1,4 +1,3 @@
-import { uploadFiletoClodinary } from "../config/clodinaryConfig.js";
 import Conversation from "../models/Conversation.js";
 import Message from "../models/Message.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -7,14 +6,12 @@ import { response } from "../utils/responseHandler.js";
 export const getConversations = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
-  const conversations = await Conversation.find({
-    participants: userId,
-  })
+  const conversations = await Conversation.find({ participants: userId })
     .populate({
       path: "participants",
       select:
-        "username profilePicture isOnline lastSeen phoneNumber phoneSuffix email isVarified",
-      match: { isVarified: true },
+        "username profilePicture isOnline lastSeen phoneNumber phoneSuffix email isVerified",
+      match: { isVerified: true },
     })
     .populate({
       path: "lastMessage",
@@ -26,37 +23,19 @@ export const getConversations = asyncHandler(async (req, res) => {
     .sort({ updatedAt: -1 })
     .lean();
 
-  const formattedConversations = conversations.map((conversation) => {
-    // DIRECT CHAT
-    if (conversation.type === "direct") {
-      const otherUser = conversation.participants.find(
-        (user) => user && user._id.toString() !== userId.toString(),
-      );
+  
+  const formatedParticipant = conversations.map((conversation) => {
+    const otherUser = conversation.participants.find(
+      (user) => user._id !== userId,
+    );
 
-      return {
-        _id: conversation._id,
-        type: "direct",
-        participants: conversation.participants,
-        otherUser,
-        lastMessage: conversation.lastMessage || null,
-      };
-    }
-
-    // GROUP CHAT
-    if (conversation.type === "group") {
-      return {
-        _id: conversation._id,
-        type: "group",
-        groupName: conversation.groupName,
-        groupAvatar: conversation.avatar || null,
-        participants: conversation.participants,
-        lastMessage: conversation.lastMessage || null,
-      };
-    }
+    return {
+      ...conversation,
+      otherUser,
+    };
   });
-
-  return response(res, 200, "Get conversations successfully", {
-    conversations: formattedConversations,
+  return response(res, 200, "get Conversations Successfully", {
+    conversations: formatedParticipant,
   });
 });
 
@@ -65,55 +44,40 @@ export const createConversation = asyncHandler(async (req, res) => {
   const { participant } = req.body;
 
   if (!participant) {
-    return response(res, 400, "Participant is required");
+    return response(res, 404, "All Fields Are Required");
   }
 
-  // Prevent self chat
-  if (userId.toString() === participant.toString()) {
-    return response(res, 400, "You cannot chat with yourself");
-  }
+  const participants = [userId, participant].sort();
 
-  const participants = [userId.toString(), participant.toString()].sort();
-
-  // Check existing conversation
-  const isExist = await Conversation.findOne({
-    participants: { $all: participants, $size: 2 },
-    type: "direct",
-  });
+  const isExist = await Conversation.findOne({ participants });
 
   if (isExist) {
-    return response(res, 409, "Conversation already exists", {
-      conversation: isExist,
-    });
+    return response(res, 400, "Conversation Alredy Exist");
   }
-
-  // Create conversation
-  const conversation = await Conversation.create({
-    participants,
-    type: "direct",
+  let conversation;
+  conversation = new Conversation({
+    participants: participants,
   });
+  await conversation.save();
 
-  // Populate
-  const populatedConversation = await Conversation.findById(conversation._id)
+  const populateconversation = await Conversation.findById(conversation._id)
     .populate("participants", "username profilePicture _id")
     .lean();
 
-  // Get receiver
-  const receiverId = participants.find((id) => id !== userId.toString());
+  const receiverId = conversation.participants.find((id) => !id.equals(userId));
 
-  // Socket emit
   if (req.io && req.socketUserMap) {
-    const receiverSocketId = req.socketUserMap.get(receiverId);
+    const receiverSocketId = req.socketUserMap.get(receiverId.toString());
 
     if (receiverSocketId) {
       req.io.to(receiverSocketId).emit("create_chat", {
-        conversation: populatedConversation,
+        conversation: populateconversation,
       });
     }
   }
 
-  return response(res, 201, "Conversation created successfully!", {
-    conversation: populatedConversation,
+  return response(res, 200, "Conversation Create Succesfully!", {
+    conversation: populateconversation,
   });
 });
 
