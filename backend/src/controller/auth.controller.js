@@ -8,21 +8,26 @@ import { sendEmail } from "../service/emailService.js";
 
 export const sendOtp = asyncHandler(async (req, res) => {
   const { phoneNumber, phoneSuffix, email } = req.body;
-  const otp = generateOtp();
-  const expiry = new Date(Date.now() + 5 * 60 * 1000);
   let user;
   if (email) {
-    user = await User.findOne({ email });
-    if (!user) {
-      user = new User({ email });
-    }
-    await sendEmail({ email, otp });
-    user.emailOtpExpiry = expiry;
-    user.emailOtp = otp;
-    await user.save();
+  let user = await User.findOne({ email });
 
-    return response(res, 200, "Otp send to your email", { email });
+  if (!user) {
+    user = new User({ email });
   }
+
+  const otp =  generateOtp();
+  const expiry = new Date(Date.now() + 5 * 60 * 1000);
+
+  user.emailOtp = otp;
+  user.emailOtpExpiry = expiry;
+
+  await user.save();
+
+  await sendEmail({ email, otp });
+
+  return response(res, 200, "Otp sent to your email", { email });
+}
   if (!phoneNumber || !phoneSuffix) {
     return response(res, 400, "phone Number And Suffix Are Required");
   }
@@ -46,6 +51,10 @@ export const verifyOtp = asyncHandler(async (req, res) => {
       return response(res, 404, "User Not Found");
     }
     const now = Date();
+    console.log(user.emailOtp,otp);
+    console.log(now > user.emailOtpExpiry);
+    
+    
     if (String(user.emailOtp) !== String(otp) || now > user.emailOtpExpiry) {
       return response(res, 400, "Otp Invalid or Expired");
     }
@@ -73,7 +82,6 @@ export const verifyOtp = asyncHandler(async (req, res) => {
 
   const token = generateToken(user._id);
 
-  const isProd = process.env.NODE_ENV === "production";
   res.cookie("token", token, {
     httpOnly: true,
     secure: true,

@@ -9,7 +9,7 @@ Most routes require authentication via a JWT token. The server accepts the token
 - `Authorization: Bearer <token>` header
 - `x-access-token` header
 
-## Standard Response Shape
+## Standard response Shape
 All endpoints return JSON in this shape:
 
 ```json

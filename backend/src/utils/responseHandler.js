@@ -1,6 +1,6 @@
 const response = (res,statusCode,message,data)=>{
     if(!res){
-        console.error("Response Object Is Null");  
+        console.error("response Object Is Null");  
     }
 
     const responseObject = {

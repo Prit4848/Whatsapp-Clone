@@ -11,6 +11,12 @@ const userSchema = new mongoose.Schema(
     lowercase: true,
     unique: true
   },
+  emailOtp: {
+  type: String
+},
+emailOtpExpiry: {
+  type: Date
+},
 
   profilePicture: String,
 

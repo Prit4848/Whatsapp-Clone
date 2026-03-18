@@ -204,7 +204,7 @@ export const createGroup = asyncHandler(async (req, res) => {
   const userId = req.user;
 
   if (!name || !participants || participants.length === 0) {
-    return Response(res, 400, "All Fields Are Required");
+    return response(res, 400, "All Fields Are Required");
   }
 
   const nameExist = await Conversation.findOne({
@@ -212,7 +212,7 @@ export const createGroup = asyncHandler(async (req, res) => {
   });
 
   if (nameExist) {
-    return Response(res, 409, "Name already exists in another chat");
+    return response(res, 409, "Name already exists in another chat");
   }
 
   const file = req.file;
@@ -235,29 +235,30 @@ export const createGroup = asyncHandler(async (req, res) => {
 
   await conversation.save();
 
-  return Response(res, 201, "Group Created Successfully");
+  return response(res, 201, "Group Created Successfully");
 });
 
 export const updateGroup = asyncHandler(async (req, res) => {
   const { name, description, participants } = req.body;
-  const userId = req.user;
+  const userId = req.user._id;
+
   const file = req.file;
   const { id: conversationId } = req.params;
 
   const conversation = await Conversation.findById(conversationId);
 
   if (!conversation) {
-    return Response(res, 404, "Conversation Not Found");
+    return response(res, 404, "Conversation Not Found");
   }
 
   // Ensure it's a group
   if (conversation.type !== "group") {
-    return Response(res, 400, "Not a group conversation");
+    return response(res, 400, "Not a group conversation");
   }
 
   // Admin check
-  if (!conversation.admins.includes(userId)) {
-    return Response(res, 403, "Only admins can update group");
+  if (!conversation.admins.includes(userId.toString())) {
+    return response(res, 403, "Only admins can update group");
   }
 
   // Check duplicate name (excluding current group)
@@ -268,7 +269,7 @@ export const updateGroup = asyncHandler(async (req, res) => {
     });
 
     if (nameExist) {
-      return Response(res, 409, "Name already exists in another chat");
+      return response(res, 409, "Name already exists in another chat");
     }
 
     conversation.groupName = name;
@@ -292,11 +293,11 @@ export const updateGroup = asyncHandler(async (req, res) => {
 
   await conversation.save();
 
-  return Response(res, 200, "Group updated successfully");
+  return response(res, 200, "Group updated successfully");
 });
 
 export const removeMemberFromGroup = asyncHandler(async (req, res) => {
-  const userId = req.user._id; // current user
+  const userId = req.user._id; 
   const { memberId } = req.body;
   const { id: conversationId } = req.params;
 
@@ -420,6 +421,73 @@ export const leaveGroup = asyncHandler(async (req, res) => {
 
   return response(res, 200, "Left group successfully", {
     conversationId,
+  });
+});
+
+export const makeAdmin = asyncHandler(async (req, res) => {
+  const requesterId = req.user._id;
+  const { id: conversationId } = req.params;
+  const { userId } = req.body;
+
+  if (!userId) {
+    return response(res, 400, "userId is required");
+  }
+
+  const conversation = await Conversation.findById(conversationId);
+
+  if (!conversation) {
+    return response(res, 404, "Conversation not found");
+  }
+
+  if (conversation.type !== "group") {
+    return response(res, 400, "Only groups have admins");
+  }
+
+  const isAdmin = conversation.admins.some(
+    (id) => id.toString() === requesterId.toString()
+  );
+
+  if (!isAdmin) {
+    return response(res, 403, "Only admins can promote users");
+  }
+
+  const isParticipant = conversation.participants.some(
+    (id) => id.toString() === userId.toString()
+  );
+
+  if (!isParticipant) {
+    return response(res, 400, "User is not in this group");
+  }
+
+  const alreadyAdmin = conversation.admins.some(
+    (id) => id.toString() === userId.toString()
+  );
+
+  if (alreadyAdmin) {
+    return response(res, 400, "User is already an admin");
+  }
+
+  conversation.admins.push(userId);
+
+  await conversation.save();
+
+  if (req.io) {
+    conversation.participants.forEach((participantId) => {
+      const socketId = req.socketUserMap?.get(participantId.toString());
+
+      if (socketId) {
+        req.io.to(socketId).emit("admin_updated", {
+          conversationId,
+          userId,
+          action: "promoted"
+        });
+      }
+    });
+  }
+
+  return response(res, 200, "User promoted to admin", {
+    conversationId,
+    admins: conversation.admins
   });
 });
 
