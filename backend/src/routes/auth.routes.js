@@ -7,5 +7,6 @@ const router = Router()
 router.route('/send-otp').post(authController.sendOtp)
 router.route('/verify-otp').post(authController.verifyOtp)
 router.route('/logout').get(authUser,authController.logout)
+router.route("/google").post(authController.googleLogin)
 
 export default router;

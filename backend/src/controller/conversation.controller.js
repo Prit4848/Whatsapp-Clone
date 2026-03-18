@@ -22,7 +22,7 @@ export const getConversations = asyncHandler(async (req, res) => {
     })
     .sort({ updatedAt: -1 })
     .lean();
-  console.log(conversations);
+
   
   const formatedParticipant = conversations.map((conversation) => {
     const otherUser = conversation.participants.find(
