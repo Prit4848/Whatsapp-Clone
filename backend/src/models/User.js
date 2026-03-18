@@ -22,7 +22,7 @@ const userSchema = new mongoose.Schema(
     about: { type: String },
     lastSeen: { type: String },
     isOnline: { type: Boolean, default: false },
-    isVarified: { type: Boolean, default: false },
+    isVerified: { type: Boolean, default: false },
     agreed: { type: Boolean, default: false },
   },
   { timestamps: true },

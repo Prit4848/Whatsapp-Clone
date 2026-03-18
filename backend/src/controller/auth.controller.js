@@ -5,6 +5,7 @@ import { response } from "../utils/responseHandler.js";
 import * as twilloService from "../service/twilloService.js";
 import { generateToken } from "../utils/generateTokens.js";
 import { sendEmail } from "../service/emailService.js";
+import {OAuth2Client} from "google-auth-library"
 
 export const sendOtp = asyncHandler(async (req, res) => {
   const { phoneNumber, phoneSuffix, email } = req.body;
@@ -51,7 +52,7 @@ export const verifyOtp = asyncHandler(async (req, res) => {
     }
     user.emailOtpExpiry = null;
     user.emailOtp = null;
-    user.isVarified = true;
+    user.isVerified = true;
     await user.save();
   } else {
     if (!phoneNumber || !phoneSuffix) {
@@ -67,7 +68,7 @@ export const verifyOtp = asyncHandler(async (req, res) => {
     if (result.status !== "approved") {
       return response(res, 400, "Invalid Otp");
     }
-    user.isVarified = true;
+    user.isVerified = true;
     await user.save();
   }
 
@@ -91,4 +92,49 @@ export const logout = asyncHandler(async (req, res) => {
     maxAge: 365 * 24 * 60 * 60 * 1000,
   });
   response(res, 200, "User logout successfully!");
+});
+
+
+
+export const googleLogin = asyncHandler(async (req, res) => {
+  const { token } = req.body;
+  if(!token){
+    return response(res,400,"token is required for login")
+  }
+  const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  const ticket = await client.verifyIdToken({
+    idToken: token,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+
+  const payload = ticket.getPayload();
+  const { sub, email, name, picture, email_verified } = payload;
+
+  let user = await User.findOne({ email });
+  
+  if (!user) {
+    user = await User.create({
+      googleId: sub,
+      username: name,
+      email: email,
+      profilePicture: picture,
+      authProvider: "google",
+      isVerified: email_verified,
+    });
+  } else if (!user.googleId) {
+    user.googleId = sub;
+    user.authProvider = "google";
+    await user.save();
+  }
+
+  const JwtToken = generateToken(user._id);
+
+  res.cookie("token", JwtToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "None",
+    maxAge: 365 * 24 * 60 * 60 * 1000,
+  });
+
+   return response(res, 200, "Login Successfully Successfully", { token:JwtToken,user });
 });

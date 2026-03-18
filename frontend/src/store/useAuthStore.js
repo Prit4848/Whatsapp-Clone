@@ -76,6 +76,21 @@ export const useAuthStore = create((set, get) => ({
       set({ isLoggingIn: false });
     }
   },
+  loginWithGoogle: async (idToken) => {
+    set({ isLoggingIn: true });
+    try {
+      const res = await axiosInstance.post("/auth/google", { token: idToken });
+      if (res.data.data?.token) {
+        localStorage.setItem("token", res?.data?.data?.token);
+      }
+      set({ authUser: res?.data?.data?.user, isAuthenticated: true });
+    } catch (error) {
+      const errorMessage = error.response.data.data.message || error.message;
+      toast.error(errorMessage);
+    } finally {
+      set({ isLoggingIn: false });
+    }
+  },
 
   logout: async () => {
     try {

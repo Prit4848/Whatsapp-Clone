@@ -29,10 +29,7 @@ app.set("trust proxy", 1);
 
 app.use(
   cors({
-    origin: [
-      "https://whatsapp-clone-1-lddk.onrender.com",
-      "http://localhost:5173"
-    ],
+    origin:true,
     credentials: true
   })
 );

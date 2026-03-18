@@ -10,8 +10,8 @@ export const getConversations = asyncHandler(async (req, res) => {
     .populate({
       path: "participants",
       select:
-        "username profilePicture isOnline lastSeen phoneNumber phoneSuffix email isVarified",
-      match: { isVarified: true },
+        "username profilePicture isOnline lastSeen phoneNumber phoneSuffix email isVerified",
+      match: { isVerified: true },
     })
     .populate({
       path: "lastMessage",
@@ -22,7 +22,7 @@ export const getConversations = asyncHandler(async (req, res) => {
     })
     .sort({ updatedAt: -1 })
     .lean();
-  console.log(conversations);
+
   
   const formatedParticipant = conversations.map((conversation) => {
     const otherUser = conversation.participants.find(
