@@ -19,19 +19,17 @@ export const sendMessage = asyncHandler(async (req, res) => {
     return response(res, 404, "Conversation not found");
   }
 
-  // ✅ Check sender is part of conversation
   const isMember = conversation.participants.some(
-    (id) => id.toString() === senderId.toString()
+    (id) => id.toString() === senderId.toString(),
   );
 
   if (!isMember) {
     return response(res, 403, "You are not part of this conversation");
   }
 
-  // ✅ Check announcement mode / permission
   if (conversation.type === "group") {
     const isAdmin = conversation.admins.some(
-      (id) => id.toString() === senderId.toString()
+      (id) => id.toString() === senderId.toString(),
     );
 
     if (conversation.announcementMode?.enabled && !isAdmin) {
@@ -50,7 +48,6 @@ export const sendMessage = asyncHandler(async (req, res) => {
   let imageOrVideoUrl = null;
   let contentType = null;
 
-  // ✅ Handle file upload
   if (file) {
     const uploadfile = await uploadFiletoClodinary(file);
 
@@ -67,16 +64,14 @@ export const sendMessage = asyncHandler(async (req, res) => {
     } else {
       return response(res, 400, "Unsupported file type");
     }
-  } 
-  // ✅ Handle text
+  }
+
   else if (content && content.trim()) {
     contentType = "text";
-  } 
-  else {
+  } else {
     return response(res, 400, "Message content is required");
   }
 
-  // ✅ Create message
   const message = await Message.create({
     conversation: conversationId,
     sender: senderId,
@@ -86,24 +81,24 @@ export const sendMessage = asyncHandler(async (req, res) => {
     messageStatus: "sent",
   });
 
-  // ✅ Update last message
   conversation.lastMessage = message._id;
 
-  // ✅ Update unread count (group logic)
   if (conversation.type === "group") {
-    conversation.unreadCount = (conversation.unreadCount || 0) + 1;
-  }
+  conversation.participants.forEach(pId => {
+    if (pId.toString() !== senderId.toString()) {
+      const current = conversation.unreadCount.get(pId.toString()) || 0;
+      conversation.unreadCount.set(pId.toString(), current + 1);
+    }
+  });
+}
 
   await conversation.save();
 
-  // ✅ Populate message
   const populatedMessage = await Message.findById(message._id)
     .populate("sender", "username profilePicture")
     .lean();
 
-  // ✅ Socket emit
   if (req.io) {
-    // Send to all participants except sender
     conversation.participants.forEach((participantId) => {
       if (participantId.toString() !== senderId.toString()) {
         const socketId = req.socketUserMap?.get(participantId.toString());
@@ -117,41 +112,42 @@ export const sendMessage = asyncHandler(async (req, res) => {
 
   return response(res, 201, "Message sent successfully", populatedMessage);
 });
+
 export const getMessages = asyncHandler(async (req, res) => {
   const userId = req.user._id;
   const { conversationId } = req.params;
 
-  const conversation = await Conversation.findOne({ _id: conversationId });
+  const conversation = await Conversation.findById(conversationId);
 
   if (!conversation) {
     return response(res, 404, "Conversation Not Found");
   }
 
   if (!conversation.participants.includes(userId)) {
-    return response(res, 400, "you not authorized to access the Messages");
+    return response(res, 403, "You are not authorized to access messages");
   }
 
-  const message = await Message.find({ conversation: conversationId })
+  const messages = await Message.find({ conversation: conversationId })
     .populate("sender", "username profilePicture")
-    .populate("receiver", "username profilePicture")
+    .populate("replyTo")
     .sort({ createdAt: 1 });
 
   await Message.updateMany(
     {
       conversation: conversationId,
-      receiver: userId,
-      messageStatus: { $in: ["send", "delivered"] },
+      readBy: { $ne: userId },
     },
-    { $set: { messageStatus: "read" } },
+    {
+      $addToSet: { readBy: userId },
+    }
   );
 
-  conversation.unreadCount = 0;
+  conversation.unreadCount.set(userId.toString(), 0);
   await conversation.save();
 
-  return response(res, 200, "get message successfullu", message);
+  return response(res, 200, "Messages fetched successfully", messages);
 });
 
-// export const markasRead = asyncHandler(async (req, res) => {
 //   const { messageId } = req.body;
 //   const userId = req.user._id;
 
@@ -184,68 +180,109 @@ export const getMessages = asyncHandler(async (req, res) => {
 
 //   return response(res, 200, "mark ans read message", message);
 // });
-
 export const deleteMessage = asyncHandler(async (req, res) => {
   const { messageId } = req.params;
   const userId = req.user._id;
+  const { deleteForEveryone } = req.body; 
 
-  const message = await Message.findOne({ _id: messageId });
+  const message = await Message.findById(messageId)
+    .populate("conversation");
 
   if (!message) {
-    return response(res, 404, "you dont have delete the message");
+    return response(res, 404, "Message not found");
   }
 
-  // if (message.sender.toString() !== userId.toString()) {
-  //   return response(res, 400, "Not Authorized to delete the message");
-  // }
-   let id
-   if(userId.toString() === message.receiver.toString()){
-     id = message.sender.toString()
-   }else if(userId.toString() === message.sender.toString()){
-    id = message.receiver.toString()
-   }
-   
-   await message.deleteOne();
+  const isSender =
+    message.sender.toString() === userId.toString();
+
+  if (deleteForEveryone && !isSender) {
+    return response(res, 403, "Not authorized to delete for everyone");
+  }
+
+  if (deleteForEveryone) {
+    message.deletedForEveryone = true;
+    message.content = "";
+    message.mediaUrl = "";
+    await message.save();
+  } else {
+    await Message.updateOne(
+      { _id: messageId },
+      { $addToSet: { deletedFor: userId } } 
+    );
+  }
 
   if (req.io && req.socketUserMap) {
-    const receiversocketId = req.socketUserMap.get(id);
-    req.io.to(receiversocketId).emit("message_deleted", {messageId});
+    const participants = message.conversation.participants;
+
+    participants.forEach((participantId) => {
+      const socketId = req.socketUserMap.get(
+        participantId.toString()
+      );
+      if (socketId) {
+        req.io.to(socketId).emit("message_deleted", {
+          messageId,
+          deleteForEveryone,
+        });
+      }
+    });
   }
 
-  return response(res, 200, "delete message successfully");
+  return response(res, 200, "Message deleted successfully");
 });
 
-export const editMessage = asyncHandler(async (req,res)=>{
+export const editMessage = asyncHandler(async (req, res) => {
   const userId = req.user._id;
-  const {messageId} = req.params
-  const {content} = req.body;
+  const { messageId } = req.params;
+  const { content } = req.body;
 
-  if(!messageId){
-    return response(res,400,"MessageId Is Require!")
+  if (!messageId) {
+    return response(res, 400, "MessageId is required!");
   }
 
-  const message = await Message.findOne({_id:messageId})
-
-  if(!message){
-    return response(res,404,"Message Not Found")
+  if (!content || content.trim() === "") {
+    return response(res, 400, "Content cannot be empty!");
   }
 
-  if(userId.toString() !== message.sender.toString()){
-   return response(res, 400, "Not Authorized to delete the message");
+  const message = await Message.findById(messageId)
+    .populate("conversation");
+
+  if (!message) {
+    return response(res, 404, "Message not found");
+  }
+
+  if (userId.toString() !== message.sender.toString()) {
+    return response(res, 403, "Not authorized to edit this message");
+  }
+
+  if (message.deletedForEveryone) {
+    return response(res, 400, "Cannot edit a deleted message");
   }
 
   message.content = content;
+  message.edited = true;
 
-  await message.save()
-  
-  if(req.io && req.socketUserMap){
-    const socketReceiverId = req.socketUserMap.get(message.receiver.toString())
+  await message.save();
 
-    req.io.to(socketReceiverId).emit("message_update",{messageId,content})
+  if (req.io && req.socketUserMap) {
+    const participants = message.conversation.participants;
+
+    participants.forEach((participantId) => {
+      const socketId = req.socketUserMap.get(
+        participantId.toString()
+      );
+
+      if (socketId) {
+        req.io.to(socketId).emit("message_updated", {
+          messageId,
+          content,
+          edited: true,
+        });
+      }
+    });
   }
 
-  return response(res,200,"Message Update Successfully")
-})
+  return response(res, 200, "Message updated successfully");
+});
 
 export const sendPoll = asyncHandler(async (req, res) => {
   const senderId = req.user._id;
@@ -262,7 +299,7 @@ export const sendPoll = asyncHandler(async (req, res) => {
   }
 
   const isMember = conversation.participants.some(
-    (id) => id.toString() === senderId.toString()
+    (id) => id.toString() === senderId.toString(),
   );
 
   if (!isMember) {
@@ -271,7 +308,7 @@ export const sendPoll = asyncHandler(async (req, res) => {
 
   if (conversation.type === "group") {
     const isAdmin = conversation.admins.some(
-      (id) => id.toString() === senderId.toString()
+      (id) => id.toString() === senderId.toString(),
     );
 
     if (conversation.announcementMode?.enabled && !isAdmin) {
@@ -287,7 +324,7 @@ export const sendPoll = asyncHandler(async (req, res) => {
   const message = await Message.create({
     conversation: conversationId,
     sender: senderId,
-    contentType: "poll",
+    messageType: "poll",
     poll: {
       question,
       options: formattedOptions,
@@ -302,7 +339,7 @@ export const sendPoll = asyncHandler(async (req, res) => {
   const populatedMessage = await Message.findById(message._id)
     .populate("sender", "username profilePicture")
     .lean();
-    
+
   if (req.io) {
     conversation.participants.forEach((participantId) => {
       if (participantId.toString() !== senderId.toString()) {
@@ -326,21 +363,20 @@ export const votePoll = asyncHandler(async (req, res) => {
     return response(res, 400, "messageId and optionIndex are required");
   }
 
-  const message = await Message.findById(messageId)
-    .populate("conversation");
+  const message = await Message.findById(messageId).populate("conversation");
 
   if (!message) {
     return response(res, 404, "Message not found");
   }
 
-  if (message.contentType !== "poll") {
+  if (message.messageType !== "poll") {
     return response(res, 400, "This message is not a poll");
   }
 
   const conversation = message.conversation;
 
   const isMember = conversation.participants.some(
-    (id) => id.toString() === userId.toString()
+    (id) => id.toString() === userId.toString(),
   );
 
   if (!isMember) {
@@ -355,20 +391,19 @@ export const votePoll = asyncHandler(async (req, res) => {
 
   // Remove previous vote (if exists)
   poll.options.forEach((opt) => {
-    opt.votes = opt.votes.filter(
-      (voteUserId) => voteUserId.toString() !== userId.toString()
+    opt.voters = opt.voters.filter(
+      (voteUserId) => voteUserId.toString() !== userId.toString(),
     );
   });
 
   //  Add new vote
-  poll.options[optionIndex].votes.push(userId);
+  poll.options[optionIndex].voters.push(userId);
 
   await message.save();
 
   const updatedMessage = await Message.findById(messageId)
     .populate("sender", "username profilePicture")
     .lean();
-
 
   if (req.io) {
     conversation.participants.forEach((participantId) => {
@@ -391,8 +426,7 @@ export const reactToMessage = asyncHandler(async (req, res) => {
     return response(res, 400, "messageId and emoji are required");
   }
 
-  const message = await Message.findById(messageId)
-    .populate("conversation");
+  const message = await Message.findById(messageId).populate("conversation");
 
   if (!message) {
     return response(res, 404, "Message not found");
@@ -401,7 +435,7 @@ export const reactToMessage = asyncHandler(async (req, res) => {
   const conversation = message.conversation;
 
   const isMember = conversation.participants.some(
-    (id) => id.toString() === userId.toString()
+    (id) => id.toString() === userId.toString(),
   );
 
   if (!isMember) {
@@ -409,7 +443,7 @@ export const reactToMessage = asyncHandler(async (req, res) => {
   }
 
   const existingReactionIndex = message.reactions.findIndex(
-    (r) => r.user.toString() === userId.toString()
+    (r) => r.user.toString() === userId.toString(),
   );
 
   if (existingReactionIndex !== -1) {
@@ -418,13 +452,12 @@ export const reactToMessage = asyncHandler(async (req, res) => {
     if (existingReaction.emoji === emoji) {
       message.reactions.splice(existingReactionIndex, 1);
     } else {
-
       message.reactions[existingReactionIndex].emoji = emoji;
     }
   } else {
     message.reactions.push({
       user: userId,
-      emoji
+      emoji,
     });
   }
 
@@ -441,7 +474,7 @@ export const reactToMessage = asyncHandler(async (req, res) => {
       if (socketId) {
         req.io.to(socketId).emit("message_reaction_updated", {
           messageId,
-          reactions: updatedMessage.reactions
+          reactions: updatedMessage.reactions,
         });
       }
     });
@@ -449,7 +482,7 @@ export const reactToMessage = asyncHandler(async (req, res) => {
 
   return response(res, 200, "Reaction updated", {
     messageId,
-    reactions: updatedMessage.reactions
+    reactions: updatedMessage.reactions,
   });
 });
 
@@ -468,7 +501,7 @@ export const replyMessage = asyncHandler(async (req, res) => {
   }
 
   const isMember = conversation.participants.some(
-    (id) => id.toString() === senderId.toString()
+    (id) => id.toString() === senderId.toString(),
   );
 
   if (!isMember) {
@@ -487,7 +520,7 @@ export const replyMessage = asyncHandler(async (req, res) => {
 
   if (conversation.type === "group") {
     const isAdmin = conversation.admins.some(
-      (id) => id.toString() === senderId.toString()
+      (id) => id.toString() === senderId.toString(),
     );
 
     if (conversation.announcementMode?.enabled && !isAdmin) {
@@ -500,7 +533,7 @@ export const replyMessage = asyncHandler(async (req, res) => {
     sender: senderId,
     content,
     messageType: "text",
-    replyTo: originalMessage._id
+    replyTo: originalMessage._id,
   });
 
   conversation.lastMessage = message._id;
@@ -513,8 +546,8 @@ export const replyMessage = asyncHandler(async (req, res) => {
       select: "content sender messageType",
       populate: {
         path: "sender",
-        select: "username profilePicture"
-      }
+        select: "username profilePicture",
+      },
     })
     .lean();
 
@@ -546,7 +579,7 @@ export const markMessagesAsRead = asyncHandler(async (req, res) => {
   }
 
   const isMember = conversation.participants.some(
-    (id) => id.toString() === userId.toString()
+    (id) => id.toString() === userId.toString(),
   );
 
   if (!isMember) {
@@ -557,11 +590,11 @@ export const markMessagesAsRead = asyncHandler(async (req, res) => {
     {
       conversation: conversationId,
       sender: { $ne: userId },
-      readBy: { $ne: userId }
+      readBy: { $ne: userId },
     },
     {
-      $addToSet: { readBy: userId }
-    }
+      $addToSet: { readBy: userId },
+    },
   );
 
   if (req.io) {
@@ -572,7 +605,7 @@ export const markMessagesAsRead = asyncHandler(async (req, res) => {
         if (socketId) {
           req.io.to(socketId).emit("messages_read", {
             conversationId,
-            userId
+            userId,
           });
         }
       }

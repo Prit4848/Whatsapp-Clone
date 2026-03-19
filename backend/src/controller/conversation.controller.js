@@ -27,7 +27,6 @@ export const getConversations = asyncHandler(async (req, res) => {
     .lean();
 
   const formattedConversations = conversations.map((conversation) => {
-    // DIRECT CHAT
     if (conversation.type === "direct") {
       const otherUser = conversation.participants.find(
         (user) => user && user._id.toString() !== userId.toString(),
@@ -42,7 +41,6 @@ export const getConversations = asyncHandler(async (req, res) => {
       };
     }
 
-    // GROUP CHAT
     if (conversation.type === "group") {
       return {
         _id: conversation._id,
@@ -68,14 +66,12 @@ export const createConversation = asyncHandler(async (req, res) => {
     return response(res, 400, "Participant is required");
   }
 
-  // Prevent self chat
   if (userId.toString() === participant.toString()) {
     return response(res, 400, "You cannot chat with yourself");
   }
 
   const participants = [userId.toString(), participant.toString()].sort();
 
-  // Check existing conversation
   const isExist = await Conversation.findOne({
     participants: { $all: participants, $size: 2 },
     type: "direct",
@@ -87,21 +83,17 @@ export const createConversation = asyncHandler(async (req, res) => {
     });
   }
 
-  // Create conversation
   const conversation = await Conversation.create({
     participants,
     type: "direct",
   });
 
-  // Populate
   const populatedConversation = await Conversation.findById(conversation._id)
     .populate("participants", "username profilePicture _id")
     .lean();
 
-  // Get receiver
   const receiverId = participants.find((id) => id !== userId.toString());
 
-  // Socket emit
   if (req.io && req.socketUserMap) {
     const receiverSocketId = req.socketUserMap.get(receiverId);
 
@@ -131,7 +123,6 @@ export const deleteChat = asyncHandler(async (req, res) => {
     return response(res, 404, "Conversation Not Found");
   }
 
-  // Proper ObjectId check
   const isParticipant = conversation.participants.some((id) =>
     id.equals(userId),
   );
@@ -140,13 +131,11 @@ export const deleteChat = asyncHandler(async (req, res) => {
     return response(res, 403, "You are not allowed to delete this chat");
   }
 
-  // Get receiver id properly
   const receiverId = conversation.participants.find((id) => !id.equals(userId));
 
   await Message.deleteMany({ conversation: conversationId });
   await Conversation.findByIdAndDelete(conversationId);
 
-  // Emit socket event
   if (req.io && req.socketUserMap && receiverId) {
     const receiverSocketId = req.socketUserMap.get(receiverId.toString());
 
@@ -251,17 +240,14 @@ export const updateGroup = asyncHandler(async (req, res) => {
     return response(res, 404, "Conversation Not Found");
   }
 
-  // Ensure it's a group
   if (conversation.type !== "group") {
     return response(res, 400, "Not a group conversation");
   }
 
-  // Admin check
   if (!conversation.admins.includes(userId.toString())) {
     return response(res, 403, "Only admins can update group");
   }
 
-  // Check duplicate name (excluding current group)
   if (name) {
     const nameExist = await Conversation.findOne({
       groupName: name,
@@ -275,7 +261,6 @@ export const updateGroup = asyncHandler(async (req, res) => {
     conversation.groupName = name;
   }
 
-  // Upload avatar
   if (file) {
     const uploadfile = await uploadFiletoClodinary(file);
     conversation.avatar = uploadfile.secure_url;
@@ -311,34 +296,28 @@ export const removeMemberFromGroup = asyncHandler(async (req, res) => {
     return response(res, 404, "Conversation not found");
   }
 
-  // Only group allowed
   if (conversation.type !== "group") {
     return response(res, 400, "This is not a group conversation");
   }
 
-  // Admin check
   if (!conversation.admins.includes(userId)) {
     return response(res, 403, "Only admins can remove members");
   }
 
-  // Check member exists
   if (!conversation.participants.includes(memberId)) {
     return response(res, 404, "Member not found in group");
   }
 
-  // Prevent removing admin (optional rule)
   const isRemovingAdmin = conversation.admins.includes(memberId);
 
   if (isRemovingAdmin && conversation.admins.length === 1) {
     return response(res, 400, "Cannot remove the only admin");
   }
 
-  // Remove member from participants
   conversation.participants = conversation.participants.filter(
     (id) => id.toString() !== memberId.toString(),
   );
 
-  // Remove from admins if present
   conversation.admins = conversation.admins.filter(
     (id) => id.toString() !== memberId.toString(),
   );
@@ -493,7 +472,7 @@ export const makeAdmin = asyncHandler(async (req, res) => {
 
 export const removeAdmin = asyncHandler(async (req, res) => {
   const currentUserId = req.user._id;
-  const { userId } = req.body; // admin to remove
+  const { userId } = req.body; 
   const { id: conversationId } = req.params;
 
   if (!userId) {
@@ -506,12 +485,10 @@ export const removeAdmin = asyncHandler(async (req, res) => {
     return response(res, 404, "Conversation not found");
   }
 
-  // Only group allowed
   if (conversation.type !== "group") {
     return response(res, 400, "This is not a group conversation");
   }
 
-  // Check current user is admin
   const isCurrentUserAdmin = conversation.admins.some(
     (id) => id.toString() === currentUserId.toString(),
   );
@@ -520,7 +497,6 @@ export const removeAdmin = asyncHandler(async (req, res) => {
     return response(res, 403, "Only admins can remove admin");
   }
 
-  // Check target user is admin
   const isTargetAdmin = conversation.admins.some(
     (id) => id.toString() === userId.toString(),
   );
@@ -529,24 +505,20 @@ export const removeAdmin = asyncHandler(async (req, res) => {
     return response(res, 404, "User is not an admin");
   }
 
-  // Optional: prevent removing yourself
   if (currentUserId.toString() === userId.toString()) {
     return response(res, 400, "You cannot remove yourself as admin");
   }
 
-  // Prevent removing last admin
   if (conversation.admins.length === 1) {
     return response(res, 400, "Cannot remove the only admin");
   }
 
-  // Remove admin
   conversation.admins = conversation.admins.filter(
     (id) => id.toString() !== userId.toString(),
   );
 
   await conversation.save();
 
-  // 🔥 Optional: socket event
   if (req.io && req.socketUserMap) {
     const socketId = req.socketUserMap.get(userId.toString());
 
@@ -574,12 +546,10 @@ export const updateGroupPermissions = asyncHandler(async (req, res) => {
     return response(res, 404, "Conversation not found");
   }
 
-  // Only group allowed
   if (conversation.type !== "group") {
     return response(res, 400, "This is not a group conversation");
   }
 
-  // Admin check
   const isAdmin = conversation.admins.some(
     (id) => id.toString() === userId.toString(),
   );
@@ -588,12 +558,10 @@ export const updateGroupPermissions = asyncHandler(async (req, res) => {
     return response(res, 403, "Only admins can update permissions");
   }
 
-  // Initialize if not exists
   if (!conversation.memberPermissions) {
     conversation.memberPermissions = {};
   }
 
-  // Update only provided fields
   if (typeof sendMessage === "boolean") {
     conversation.memberPermissions.sendMessage = sendMessage;
   }
@@ -632,12 +600,10 @@ export const setAnnouncementMode = asyncHandler(async (req, res) => {
     return response(res, 404, "Conversation not found");
   }
 
-  // Only group allowed
   if (conversation.type !== "group") {
     return response(res, 400, "This is not a group conversation");
   }
 
-  // Admin check
   const isAdmin = conversation.admins.some(
     (id) => id.toString() === userId.toString(),
   );
@@ -646,15 +612,12 @@ export const setAnnouncementMode = asyncHandler(async (req, res) => {
     return response(res, 403, "Only admins can change announcement mode");
   }
 
-  // Initialize if needed
   if (!conversation.announcementMode) {
     conversation.announcementMode = { enabled: false };
   }
 
   conversation.announcementMode.enabled = enabled;
 
-  // 🔥 Optional: sync with permissions
-  // If enabled → only admins can send
   if (!conversation.memberPermissions) {
     conversation.memberPermissions = {};
   }
@@ -667,7 +630,6 @@ export const setAnnouncementMode = asyncHandler(async (req, res) => {
 
   await conversation.save();
 
-  // 🔥 Optional: real-time event
   if (req.io) {
     req.io.to(conversationId).emit("announcement_mode_updated", {
       conversationId,

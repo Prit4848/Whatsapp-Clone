@@ -102,8 +102,6 @@ export const logout = asyncHandler(async (req, res) => {
   response(res, 200, "User logout successfully!");
 });
 
-
-
 export const googleLogin = asyncHandler(async (req, res) => {
   const { token } = req.body;
   if(!token){
