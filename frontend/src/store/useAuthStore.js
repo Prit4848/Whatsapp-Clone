@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 
 // const BASE_URL = "https://whatsapp-clone-c57y.onrender.com";
-const BASE_URL = "http://localhost:4000";
+const BASE_URL = import.meta.env.VITE_MODE === "development"?"http://localhost:4000": "https://whatsapp-clone-c57y.onrender.com";
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,
@@ -38,42 +38,6 @@ export const useAuthStore = create((set, get) => ({
       });
     } finally {
       set({ isCheckingAuth: false });
-    }
-  },
-
-  sendOtp: async (data) => {
-    set({ isLoggingIn: true });
-    try {
-      const res = await axiosInstance.post("/auth/send-otp", data);
-      toast.success(`${res.data.message}`);
-      return res;
-    } catch (error) {
-      const errorMessage =
-        error?.response?.data?.message ||
-        error.message ||
-        "Email sending error please try again";
-      toast.error(`${errorMessage}`);
-    } finally {
-      set({ isLoggingIn: false });
-    }
-  },
-
-  verifyOtp: async (data) => {
-    set({ isLoggingIn: true });
-    try {
-      const res = await axiosInstance.post("/auth/verify-otp", data);
-      if (res.data?.data?.token) {
-        localStorage.setItem("token", res.data.data.token);
-      }
-      set({ authUser: res.data.data.user, isAuthenticated: true });
-      toast.success(`${res.data.message}`);
-
-      get().connectSocket();
-    } catch (error) {
-      const errorMessage = error.response.data.message || error.message;
-      toast.error(errorMessage);
-    } finally {
-      set({ isLoggingIn: false });
     }
   },
   loginWithGoogle: async (idToken) => {

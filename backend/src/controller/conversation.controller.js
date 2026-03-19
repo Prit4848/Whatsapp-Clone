@@ -19,7 +19,7 @@ export const getConversations = asyncHandler(async (req, res) => {
     .populate({
       path: "lastMessage",
       populate: {
-        path: "sender receiver",
+        path: "sender",
         select: "username profilePicture",
       },
     })
@@ -27,17 +27,27 @@ export const getConversations = asyncHandler(async (req, res) => {
     .lean();
 
   const formattedConversations = conversations.map((conversation) => {
+    const unreadCount = conversation.unreadCount?.get
+      ? conversation.unreadCount.get(userId.toString()) || 0
+      : conversation.unreadCount?.[userId.toString()] || 0;
+
     if (conversation.type === "direct") {
       const otherUser = conversation.participants.find(
-        (user) => user && user._id.toString() !== userId.toString(),
+        (user) => user && user._id.toString() !== userId.toString()
       );
 
       return {
         _id: conversation._id,
         type: "direct",
+
         participants: conversation.participants,
-        otherUser,
+        otherUser: otherUser || null,
+
         lastMessage: conversation.lastMessage || null,
+
+        unreadCount,
+
+        updatedAt: conversation.updatedAt,
       };
     }
 
@@ -45,16 +55,35 @@ export const getConversations = asyncHandler(async (req, res) => {
       return {
         _id: conversation._id,
         type: "group",
+
         groupName: conversation.groupName,
-        groupAvatar: conversation.avatar || null,
+        groupDescription: conversation.groupDescription || null,
+        groupAvatar: conversation.groupAvatar || null,
+
         participants: conversation.participants,
+
+        admins: conversation.admins,
+        moderators: conversation.moderators,
+        createdBy: conversation.createdBy,
+
         lastMessage: conversation.lastMessage || null,
+
+        announcementOnly: conversation.announcementOnly,
+        announcementMode: conversation.announcementMode,
+
+        memberPermissions: conversation.memberPermissions,
+
+        unreadCount,
+
+        updatedAt: conversation.updatedAt,
       };
     }
+
+    return null;
   });
 
   return response(res, 200, "Get conversations successfully", {
-    conversations: formattedConversations,
+    conversations: formattedConversations.filter(Boolean),
   });
 });
 

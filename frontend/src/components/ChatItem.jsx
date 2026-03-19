@@ -7,7 +7,7 @@ import { useEffect } from "react";
 import {useUserStore} from "../store/useUserStore"
 
 const ChatItem = ({ chat }) => {
-  const { activeChat, setActiveChat, chats,updateUserStatus, onlineUsers } = useChatStore();
+  const { activeChat, setActiveChat, chats,updateUserStatus } = useChatStore();
   const partner = chat.participants.find((p) => p != "current") || [];
   const lastMessage = chat.lastMessage;
   const isActive = activeChat === chat._id;
