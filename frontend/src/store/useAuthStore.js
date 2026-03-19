@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 
 // const BASE_URL = "https://whatsapp-clone-c57y.onrender.com";
-const BASE_URL = "http://localhost:4000";
+const BASE_URL =  import.meta.env.VITE_MODE === "development" ? "http://localhost:4000" : "https://whatsapp-clone-c57y.onrender.com"
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,
@@ -84,6 +84,7 @@ export const useAuthStore = create((set, get) => ({
         localStorage.setItem("token", res?.data?.data?.token);
       }
       set({ authUser: res?.data?.data?.user, isAuthenticated: true });
+      get().connectSocket();
     } catch (error) {
       const errorMessage = error.response.data.data.message || error.message;
       toast.error(errorMessage);
