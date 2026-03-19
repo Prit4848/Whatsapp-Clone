@@ -1,9 +1,11 @@
 import {Router} from "express"
 import authUser from "../middleware/authUser.js"
+import {multerMiddleware} from "../middleware/multerMiddleware.js"
 import * as conversationController from "../controller/conversation.controller.js"
 
 const router = Router()
 
+//For Direct Chat
 router.route("/").get(authUser,conversationController.getConversations)
 router.route("/").post(authUser,conversationController.createConversation)
 router.route("/:conversationId").delete(authUser,conversationController.deleteChat)

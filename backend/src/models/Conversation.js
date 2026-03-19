@@ -1,14 +1,62 @@
 import mongoose from "mongoose";
 
 const conversationSchema = new mongoose.Schema(
-  {
-    participants: [{ type: mongoose.Schema.Types.ObjectId, ref:"user" }],
-    lastMessage: { type: mongoose.Schema.Types.ObjectId, ref:"message" },
-    unreadCount: { type: Number, default: 0 },
+{
+  participants: [{ type: mongoose.Schema.Types.ObjectId, ref: "user" }],
+
+  type: {
+    type: String,
+    enum: ["direct", "group"],
+    default: "direct"
   },
-  { timestamps: true },
+
+  groupName: String,
+  groupDescription: String,
+  groupAvatar: String,
+
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "user"
+  },
+
+  admins: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "user"
+  }],
+
+  moderators: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "user"
+  }],
+
+  lastMessage: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "message"
+  },
+
+  announcementOnly: {
+    type: Boolean,
+    default: false
+  },
+
+  memberPermissions: {
+    sendMessage: { type: Boolean, default: true },
+    editInfo: { type: Boolean, default: false }
+  },
+
+  unreadCount: {
+    type: Map,
+    of: Number
+  },
+  announcementMode: {
+  enabled: { type: Boolean, default: false }
+}
+
+},
+{ timestamps: true }
 );
 
-conversationSchema.index({participants:1})
-const Conversation = mongoose.model("conversation", conversationSchema);
+conversationSchema.index({ participants: 1 });
+
+const Conversation =  mongoose.model("conversation", conversationSchema);
 export default Conversation;
