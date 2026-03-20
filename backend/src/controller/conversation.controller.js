@@ -33,7 +33,7 @@ export const getConversations = asyncHandler(async (req, res) => {
 
     if (conversation.type === "direct") {
       const otherUser = conversation.participants.find(
-        (user) => user && user._id.toString() !== userId.toString()
+        (user) => user && user._id.toString() !== userId.toString(),
       );
 
       return {
@@ -253,7 +253,14 @@ export const createGroup = asyncHandler(async (req, res) => {
 
   await conversation.save();
 
-  return response(res, 201, "Group Created Successfully");
+  const populatedConversation = await Conversation.findById(conversation._id)
+    .populate("participants", "username profilePicture isOnline")
+    .populate("lastMessage")
+    .lean();
+
+  return response(res, 201, "Group Created Successfully",{
+    conversation: populatedConversation,
+  });
 });
 
 export const updateGroup = asyncHandler(async (req, res) => {
@@ -311,7 +318,7 @@ export const updateGroup = asyncHandler(async (req, res) => {
 });
 
 export const removeMemberFromGroup = asyncHandler(async (req, res) => {
-  const userId = req.user._id; 
+  const userId = req.user._id;
   const { memberId } = req.body;
   const { id: conversationId } = req.params;
 
@@ -452,7 +459,7 @@ export const makeAdmin = asyncHandler(async (req, res) => {
   }
 
   const isAdmin = conversation.admins.some(
-    (id) => id.toString() === requesterId.toString()
+    (id) => id.toString() === requesterId.toString(),
   );
 
   if (!isAdmin) {
@@ -460,7 +467,7 @@ export const makeAdmin = asyncHandler(async (req, res) => {
   }
 
   const isParticipant = conversation.participants.some(
-    (id) => id.toString() === userId.toString()
+    (id) => id.toString() === userId.toString(),
   );
 
   if (!isParticipant) {
@@ -468,7 +475,7 @@ export const makeAdmin = asyncHandler(async (req, res) => {
   }
 
   const alreadyAdmin = conversation.admins.some(
-    (id) => id.toString() === userId.toString()
+    (id) => id.toString() === userId.toString(),
   );
 
   if (alreadyAdmin) {
@@ -487,7 +494,7 @@ export const makeAdmin = asyncHandler(async (req, res) => {
         req.io.to(socketId).emit("admin_updated", {
           conversationId,
           userId,
-          action: "promoted"
+          action: "promoted",
         });
       }
     });
@@ -495,13 +502,13 @@ export const makeAdmin = asyncHandler(async (req, res) => {
 
   return response(res, 200, "User promoted to admin", {
     conversationId,
-    admins: conversation.admins
+    admins: conversation.admins,
   });
 });
 
 export const removeAdmin = asyncHandler(async (req, res) => {
   const currentUserId = req.user._id;
-  const { userId } = req.body; 
+  const { userId } = req.body;
   const { id: conversationId } = req.params;
 
   if (!userId) {

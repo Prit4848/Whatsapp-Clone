@@ -5,6 +5,7 @@ import { useChatStore } from "./useChatStore";
 
 export const useUserStore = create((set) => ({
   allUsers: null,
+  AllUsersForGroup:null,
 
   setAllUsers: async () => {
     try {
@@ -15,7 +16,16 @@ export const useUserStore = create((set) => ({
       toast.error(`${errorMessage}`);
     }
   },
-
+  setAllUsersForGroup:async()=>{
+     try {
+      const response = await axiosInstance.get("/user/users-group");
+      set({ AllUsersForGroup: response.data.data.users });
+    } catch (error) {
+      const errorMessage = error.response.data.message || error.message;
+      toast.error(`${errorMessage}`);
+    }
+  }
+,
   getUserStatus: (id) => {
     const { onlineUsers } = useChatStore.getState();
     return onlineUsers.get(id)?.isOnline || false;

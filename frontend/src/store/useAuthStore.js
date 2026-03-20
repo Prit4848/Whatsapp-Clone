@@ -40,6 +40,7 @@ export const useAuthStore = create((set, get) => ({
       set({ isCheckingAuth: false });
     }
   },
+  
   loginWithGoogle: async (idToken) => {
     set({ isLoggingIn: true });
     try {

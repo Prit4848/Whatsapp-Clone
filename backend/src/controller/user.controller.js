@@ -10,7 +10,7 @@ export const updateProfile = asyncHandler(async (req, res) => {
   let user;
   user = await User.findOne({ _id: userId });
   const file = req.file;
- 
+
   if (file) {
     const uploadResult = await uploadFiletoClodinary(file);
     user.profilePicture = uploadResult.secure_url;
@@ -42,17 +42,57 @@ export const authorizedUser = asyncHandler(async (req, res) => {
 
 export const allUsers = asyncHandler(async (req, res) => {
   const userId = req.user._id;
-  const alredyConversation = await Conversaton.find({ participants: userId });
-  const notInclude = new Set();
 
-  alredyConversation.forEach((convo) => {
+  // 1. Get all conversations of current user
+  const conversations = await Conversaton.find({
+    participants: userId,
+    type: "direct",
+  })
+    .populate("lastMessage", "sender receiver content messageType createdAt")
+    .lean();
+
+  // 2. Extract userIds already in conversation
+  const notInclude = new Set();
+  const conversationMap = new Map();
+
+  conversations.forEach((convo) => {
     convo.participants.forEach((id) => {
-      notInclude.add(id.toString());
+      if (id.toString() !== userId.toString()) {
+        notInclude.add(id.toString());
+        conversationMap.set(id.toString(), convo);
+      }
     });
   });
-  notInclude.add(userId)
 
-  const users = await User.find({ _id: { $nin:Array.from(notInclude)},isVerified:true})
+  notInclude.add(userId.toString());
+
+  // 3. Get remaining users (no conversation yet)
+  const users = await User.find({
+    _id: { $nin: Array.from(notInclude) },
+    isVerified: true,
+  })
+    .select(
+      "username profilePicture lastSeen isOnline about email phoneNumber phoneSuffix _id"
+    )
+    .lean();
+
+  // 4. Attach conversation if exists (null here since excluded)
+  const UsersAndConversations = users.map((user) => ({
+    ...user,
+    conversation: conversationMap.get(user._id.toString()) || null,
+  }));
+
+  return response(
+    res,
+    200,
+    "get all users successfully",
+    UsersAndConversations
+  );
+});
+
+export const allUserGroupChat = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const users = await User.find({ _id: { $ne: userId }, isVerified: true })
     .select(
       "username profilePicture lastSeen isOnline about email phoneNumber phoneSuffix _id",
     )
@@ -61,25 +101,6 @@ export const allUsers = asyncHandler(async (req, res) => {
   if (!users) {
     return response(res, 400, "Users Are Not Found");
   }
-  const UsersAndConversations = await Promise.all(
-    users.map(async (user) => {
-      const conversation = await User.findOne({
-        participants: { $all: [userId, user?._id] },
-      })
-        .populate("lastMessage", "sender receiver content content")
-        .lean();
 
-      return {
-        ...user,
-        conversation: conversation || null,
-      };
-    }),
-  );
-
-  return response(
-    res,
-    200,
-    "get all user and userconversations successfully",
-    UsersAndConversations,
-  );
+  return response(res,200,"get all user for group chat",{users:users})
 });

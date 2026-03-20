@@ -1,8 +1,5 @@
 import { create } from "zustand";
-import {
-  users,
-  currentUser,
-} from "../data/mockData";
+import { users, currentUser } from "../data/mockData";
 import axiosInstance from "../services/axiosInstance";
 import { useAuthStore } from "../store/useAuthStore";
 import toast from "react-hot-toast";
@@ -25,8 +22,7 @@ export const useChatStore = create((set, get) => ({
   onlineUsers: new Map(),
 
   // UI state
-  isMobileView:
-    typeof window !== "undefined" ? window.innerWidth < 768 : false,
+  isMobileView: typeof window !== "undefined" ? window.innerWidth < 768 : false,
   showChatList: true,
   isLoading: false,
 
@@ -123,7 +119,6 @@ export const useChatStore = create((set, get) => ({
     // USER TYPING
     // ===============================
     socket.on("user_typing", ({ userId, conversationId, isTyping }) => {
- 
       set((state) => {
         const newTypingUsers = new Map(state.typingUsers);
 
@@ -204,7 +199,7 @@ export const useChatStore = create((set, get) => ({
       const currentUser = useAuthStore.getState().authUser;
 
       if (!currentUser) return;
-      
+
       const response = await axiosInstance.get("/conversation/");
 
       const chats = response.data.data.conversations.map((chat) => ({
@@ -228,7 +223,7 @@ export const useChatStore = create((set, get) => ({
         error.response?.data?.message ||
         error.message ||
         "Something Went Wrong Please Try Again";
-      toast.error(errorMessage)
+      toast.error(errorMessage);
     }
   },
 
@@ -239,23 +234,33 @@ export const useChatStore = create((set, get) => ({
       const response = await axiosInstance.post("/conversation/", {
         participant: participant,
       });
-      const createdConversationresponse = response.data.data.conversation;
-     const createdConversation = {
-  _id: createdConversationresponse._id,
-  participants: createdConversationresponse.participants.map((user) =>
-    user._id === currentUser._id ? "current" : user
-  ),
-  lastMessage: {
-    content: createdConversationresponse.lastMessage?.content || null,
-    createdAt: createdConversationresponse.lastMessage?.createdAt || null,
-    sender: createdConversationresponse.lastMessage?.sender || null,
-    messageStatus:
-      createdConversationresponse.lastMessage?.messageStatus || null,
-  },
-  createdAt: createdConversationresponse.createdAt,
-  updatedAt: createdConversationresponse.updatedAt,
-};
+      const convo = response.data.data.conversation;
 
+      const createdConversation = {
+        _id: convo._id,
+
+        participants: convo.participants.map((user) => ({
+          ...user,
+          isCurrentUser: user._id === currentUser._id,
+        })),
+
+        lastMessage: convo.lastMessage
+          ? {
+              _id: convo.lastMessage._id,
+              content: convo.lastMessage.content || null,
+              messageType: convo.lastMessage.messageType || "text",
+              mediaUrl: convo.lastMessage.mediaUrl || null,
+              sender: convo.lastMessage.sender || null,
+              createdAt: convo.lastMessage.createdAt || null,
+              readBy: convo.lastMessage.readBy || [],
+            }
+          : null,
+
+        type: convo.type || "direct",
+
+        createdAt: convo.createdAt,
+        updatedAt: convo.updatedAt,
+      };
       set((state) => ({
         chats: [...state.chats, createdConversation],
       }));
@@ -270,7 +275,51 @@ export const useChatStore = create((set, get) => ({
       set({ isCreateChat: false });
     }
   },
+  createGroupChat: async (data) => {
+    set({ isCreateChat: true });
+    try {
+      
+      const response = await axiosInstance.post(
+        `/conversation/create-group`,
+        data,
+      );
 
+      const convo = response.data.data.conversation;
+
+      const formattedConversation = {
+        _id: convo._id,
+
+        type: convo.type,
+
+        groupName: convo.groupName,
+        groupAvatar: convo.groupAvatar || "",
+
+        participants: convo.participants.map((user) => ({
+          ...user,
+          isCurrentUser: user._id === data.currentUserId,
+        })),
+
+        lastMessage: convo.lastMessage
+          ? {
+              content: convo.lastMessage.content,
+              messageType: convo.lastMessage.messageType,
+              createdAt: convo.lastMessage.createdAt,
+              sender: convo.lastMessage.sender,
+            }
+          : null,
+
+        createdAt: convo.createdAt,
+        updatedAt: convo.updatedAt,
+      };
+
+      set((state) => ({
+        chats: [formattedConversation, ...state.chats],
+        isCreateChat: false,
+      }));
+    } catch (error) {
+      set({ isCreateChat: false });
+    }
+  },
   setMessage: async () => {
     try {
       const { activeChat } = get();
@@ -302,10 +351,10 @@ export const useChatStore = create((set, get) => ({
   },
 
   setActiveChat: (chatId) => {
-  set({
-    activeChat: chatId,
-  });
-},
+    set({
+      activeChat: chatId,
+    });
+  },
 
   clearActiveChat: () => {
     set({
